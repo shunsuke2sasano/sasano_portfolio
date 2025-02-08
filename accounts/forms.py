@@ -283,3 +283,107 @@ class AccountEditForm(forms.ModelForm):
             raise ValidationError("パスワードは8~32文字で設定してください。")
         return password
 
+class AccountEditForm(forms.ModelForm):
+    """管理者用アカウント編集フォーム"""
+    
+    name = forms.CharField(
+        max_length=255,
+        required=True,
+        label="アカウント名",
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        error_messages={'required': 'アカウント名を入力してください。'}
+    )
+
+    furigana = forms.CharField(
+        max_length=255,
+        required=True,
+        label="ふりがな",
+        validators=[validate_hiragana],
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        error_messages={'required': 'ふりがなを入力してください。'}
+    )
+
+    email = forms.EmailField(
+        max_length=255,
+        required=True,
+        label="メールアドレス",
+        widget=forms.EmailInput(attrs={'class': 'form-control'}),
+        error_messages={
+            'required': 'メールアドレスは必須です。',
+            'invalid': '有効なメールアドレスを入力してください。'
+        }
+    )
+
+    password = forms.CharField(
+        max_length=32,
+        required=False,
+        label="パスワード",
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        help_text="8~32文字の半角英数字と'_'、'-'のみ使用可能"
+    )
+
+    profile_image = forms.ImageField(
+        required=False,
+        label="プロフィール画像",
+        widget=forms.FileInput(attrs={'class': 'form-control'})
+    )
+
+    gender = forms.ChoiceField(
+        choices=[('male', '男性'), ('female', '女性')],
+        required=True,
+        label="性別",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        error_messages={'required': '性別を選択してください。'}
+    )
+
+    age = forms.IntegerField(
+        required=True,
+        label="年齢",
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        min_value=0,
+        max_value=999,
+        error_messages={
+            'required': '年齢を入力してください。',
+            'invalid': '年齢は数値で入力してください。',
+            'max_value': '年齢は999以下にしてください。'
+        }
+    )
+
+    bio = forms.CharField(
+        max_length=1500,
+        required=False,
+        label="自己紹介",
+        widget=forms.Textarea(attrs={'class': 'form-control'}),
+        help_text="1500文字以内で入力してください。"
+    )
+
+    is_active = forms.ChoiceField(
+        choices=[('True', "有効"), ('False', "無効")],
+        required=True,
+        label="ステータス",
+        widget=forms.RadioSelect,
+        error_messages={'required': 'ステータスを選択してください。'}
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = ['name', 'furigana', 'email', 'password', 'profile_image', 'gender', 'age', 'bio', 'is_active']
+
+    # バリデーション
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if len(email) > 255:
+            raise ValidationError("メールアドレスは255文字以下で入力してください。")
+        return email
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if password and (len(password) < 8 or len(password) > 32 or not re.match(r'^[a-zA-Z0-9_-]+$', password)):
+            raise ValidationError("パスワードは8~32文字の半角英数字と'_'、'-'のみ使用可能です。")
+        return password
+
+    def clean_profile_image(self):
+        image = self.cleaned_data.get('profile_image')
+        if image and image.size > 2 * 1024 * 1024:  # 2MB
+            raise ValidationError("画像サイズは2MB以内にしてください。")
+        return image
