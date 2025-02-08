@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from users.forms import EmailUpdateForm, PasswordUpdateForm, UserProfileEditForm
 
 def users_dashboard(request):
-    return render(request, 'users/users_dashboard.html')
+    return render(request, 'dashboard/users_dashboard.html')
 
 def users_settings(request):
     if request.method == 'POST':
@@ -15,7 +15,7 @@ def users_settings(request):
             request.user.set_password(password_form.cleaned_data['password'])
             request.user.save()
             messages.success(request, '設定が更新されました。')
-            return redirect('users/users_dashboard.html')
+            return redirect('dashboard/user_dashboard.html')
         else:
             messages.error(request, '入力内容にエラーがあります。')
     else:

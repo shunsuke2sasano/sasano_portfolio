@@ -61,8 +61,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [ 
-            os.path.join(BASE_DIR, 'dashboard/templates')],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -87,7 +86,7 @@ DATABASES = {
         'NAME': 'portfolio_db',
         'USER': 'root',
         'PASSWORD': 'Bullshit03Sasano19',
-        'HOST': 'portfolio_db',  # コンテナ名を指定
+        'HOST': '172.19.0.2',  # コンテナ名を指定
         'PORT': '3306',          # MySQLのデフォルトポート
     }
 }

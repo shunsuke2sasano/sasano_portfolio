@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from accounts.forms import EditProfileForm, UserSettingsForm  # ✅ 修正
 from accounts.models import UserProfile, Like
+from django.utils.timezone import now
 from django.db.models import Count
 from datetime import datetime
 
@@ -31,7 +32,18 @@ def admin_dashboard(request):
 def user_dashboard(request):
     if request.user.is_admin:
         return redirect('dashboard:admin_dashboard')
-    return render(request, 'dashboard/user_dashboard.html')
+
+    # ユーザーの年間 & 月間のいいね数を取得
+    current_year = now().year
+    current_month = now().month
+
+    yearly_likes = Like.objects.filter(liked_user=request.user, created_at__year=current_year).count()
+    monthly_likes = Like.objects.filter(liked_user=request.user, created_at__year=current_year, created_at__month=current_month).count()
+
+    return render(request, 'dashboard/user_dashboard.html', {  # ✅ 修正
+        "yearly_likes": yearly_likes,
+        "monthly_likes": monthly_likes
+    })
 
 @login_required
 def edit_profile(request):
@@ -39,7 +51,7 @@ def edit_profile(request):
         form = EditProfileForm(request.POST, instance=request.user)
         if form.is_valid():
             form.save()
-            return redirect('dashboard:users_dashboard')
+            return redirect('dashboard:user_dashboard')
     else:
         form = EditProfileForm(instance=request.user)
     return render(request, 'dashboard/edit_profile.html', {'form': form})
