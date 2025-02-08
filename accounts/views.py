@@ -39,6 +39,12 @@ def login_view(request):
             user = authenticate(request, username=email, password=password)
 
             if user:
+                 
+                if not user.is_active:
+                    logger.warning(f"Login attempt for inactive user: {email}")
+                    messages.error(request, "このアカウントは無効化されています。")
+                    return render(request, 'accounts/login.html', {'form': form})
+
                 login(request, user)
                 logger.info(f"User {email} logged in successfully.")
 
