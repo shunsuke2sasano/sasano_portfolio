@@ -32,7 +32,7 @@
                         {% csrf_token %}
                         <button type="submit" id="delete-btn-{{ user.id }}" name="delete-btn" class="btn btn-danger btn-sm">削除</button>
                     </form>
-                    <a href="{% url 'accounts:admin_settings' user.id %}" class="btn btn-primary btn-sm">編集</a>
+                    <a href="{% url 'accounts:account_edit' user.id %}" class="btn btn-primary btn-sm">編集</a>
                     <button class="btn btn-secondary btn-sm toggle-status-btn" data-id="{{ user.id }}">
                         {% if user.is_active %}無効化{% else %}有効化{% endif %}
                     </button>
