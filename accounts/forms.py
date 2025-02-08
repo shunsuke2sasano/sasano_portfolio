@@ -255,3 +255,31 @@ class UserSettingsForm(forms.ModelForm):  # ✅ `UserSettingsForm` 追加
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._meta.model = get_user()
+
+class AccountEditForm(forms.ModelForm):
+    is_active = forms.ChoiceField(
+        choices=[(True, "有効"), (False, "無効")],
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        required=True,
+        label="ステータス",
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = ['name', 'email', 'password', 'profile_image', 'bio', 'is_active']
+        widgets = {
+            'password': forms.PasswordInput(attrs={'class': 'form-control'}),
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'bio': forms.Textarea(attrs={'class': 'form-control'}),
+            'profile_image': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if not password:
+            return self.instance.password  # 変更なし
+        if len(password) < 8 or len(password) > 32:
+            raise ValidationError("パスワードは8~32文字で設定してください。")
+        return password
+
