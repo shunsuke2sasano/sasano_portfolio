@@ -1,0 +1,21 @@
+{% extends "dashboard/base.html" %}
+
+{% block content %}
+<h1>管理者ダッシュボード</h1>
+<div class="rankings">
+    <h2>月間いいねランキング</h2>
+    <ul>
+        {% for profile in monthly_profiles %}
+        <li>{{ profile.user.name }}: {{ profile.total_likes }} いいね</li>
+        {% endfor %}
+    </ul>
+
+    <h2>年間いいねランキング</h2>
+    <ul>
+        {% for profile in yearly_profiles %}
+        <li>{{ profile.user.name }}: {{ profile.total_likes }} いいね</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}一般アカウント一覧{% endblock %}
+
+{% block content %}
+<ul>
+    {% for profile in profiles %}
+        <li>
+            <!--プロフィール画像-->>
+            <img src="{{ profile.profile_image.url|default_if_none:'/media/profile_images/default_profile_image.jpg' }}" 
+                 alt="Profile Image" width="100">
+            
+            <!--ユーザー名-->>
+            <strong>
+                <a href="{% url 'accounts:general_account_detail' user_id=profile.user.id %}">
+                    {{ profile.user.name }}
+                </a>
+            </strong> - {{ profile.get_gender_display }}
+
+            <!--いいねボタン-->>
+            <button class="like-btn" data-user-id="{{ profile.user.id }}">
+                👍 {{ profile.likes_count }}
+            </button>
+        </li>
+    {% endfor %}
+</ul>
+
+<script>
+    const likeToggleUrl = "{% url 'accounts:like_toggle' %}";
+    const csrfToken = "{{ csrf_token }}";
+</script>
+<script src="{% static 'accounts/like_toggle.js' %}"></script>
+{% endblock %}
+

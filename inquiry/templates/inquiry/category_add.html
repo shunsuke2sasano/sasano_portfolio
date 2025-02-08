@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}カテゴリー追加{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>カテゴリー追加</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">追加</button>
+    </form>
+</div>
+{% endblock %}

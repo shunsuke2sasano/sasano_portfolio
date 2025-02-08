@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}カテゴリ一覧{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>カテゴリ一覧</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>カテゴリ名</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+            <tr>
+                <td>{{ category.name }}</td>
+                <td>
+                    <a href="{% url 'inquiry:category_edit' category.id %}" class="btn btn-primary btn-sm">編集</a>
+                    <form method="post" action="{% url 'inquiry:category_delete' category.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">削除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+

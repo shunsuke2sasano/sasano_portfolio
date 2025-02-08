@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}お問い合わせ一覧{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>お問い合わせ一覧</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>カテゴリー</th>
+                <th>本文（最初の10文字）</th>
+                <th>ステータス</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inquiry in inquiries %}
+            <tr>
+                <td>{{ inquiry.category.name }}</td>
+                <td>
+                    <a href="{% url 'inquiry:inquiry_detail' inquiry.id %}">
+                        {{ inquiry.body|slice:":10" }}
+                    </a>
+                </td>
+                <td>{{ inquiry.get_status_display }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

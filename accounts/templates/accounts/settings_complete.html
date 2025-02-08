@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}設定変更完了{% endblock %}
+
+{% block content %}
+<div class="container mt-4 text-center">
+    <h2>設定変更が完了しました</h2>
+    <p>管理者設定が正常に変更されました。</p>
+    
+    <a href="{% url 'accounts:account_list' %}" class="btn btn-primary">アカウント一覧画面へ</a>
+    
+    {% if user and user.id %}
+        <a href="{% url 'accounts:admin_settings' user.id %}" class="btn btn-primary">管理者設定画面へ</a>
+    {% else %}
+        <p>管理者設定画面に戻るには、正しいIDが必要です。</p>
+    {% endif %}
+</div>
+{% endblock %}

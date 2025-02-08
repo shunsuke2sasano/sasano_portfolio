@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{ profile.user.name }{% endblock %}
+
+{% block content %}
+
+<img src="{{ profile.profile_image.url|default_if_none:'/media/profile_images/default_profile_image.png' }}" alt="Profile Image" width="100">
+<p>ユーザー名: {{profile.user.name}}</p>
+<p>性別: {{ profile.get_gender_display }}</p>
+<p>自己紹介: {{ profile.bio }}</p>
+<p>いいね数: {{ profile.likes_count }}</p>
+<button class="like-btn" data-user-id="{{ profile.user.id }}">
+    👍 {{ profile.likes_count }}
+</button>
+
+<script>
+     const likeToggleUrl = "{% url 'accounts:like_toggle' %}";
+     const csrfToken = "{{ csrf_token }}";
+</script>
+
+<script src="{% static 'accounts/like_toggle.js' %}"></script>
+
+{% endblock %}

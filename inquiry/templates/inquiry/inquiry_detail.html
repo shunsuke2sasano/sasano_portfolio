@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}お問い合わせ詳細{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>お問い合わせ詳細</h2>
+    <p><strong>カテゴリー:</strong> {{ inquiry.category.name }}</p>
+    <p><strong>本文:</strong> {{ inquiry.body|linebreaks }}</p>
+    <p><strong>ステータス:</strong> {{ inquiry.get_status_display }}</p>
+    <a href="{% url 'inquiry:inquiry_list' %}" class="btn btn-secondary">一覧に戻る</a>
+</div>
+{% endblock %}

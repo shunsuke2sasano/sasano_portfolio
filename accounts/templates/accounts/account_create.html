@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}アカウント作成{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>アカウント作成</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div>
+            <label>
+                <input type="radio" name="account_type" value="general" id="generalRadio" checked>
+                一般
+            </label>
+            <label>
+                <input type="radio" name="account_type" value="admin" id="adminRadio">
+                管理者
+            </label>
+        </div>
+
+        <!-- エラーメッセージ表示 -->
+        {% if form.errors %}
+        <div class="alert alert-danger">
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- フォームフィールドの描画 -->
+        <div id="generalFields">
+            <div class="form-group">
+                {{ form.name.label_tag }}
+                {{ form.name|add_attrs:'id:general_name'}}
+            </div>
+            <div class="form-group">
+                {{ form.email.label_tag }}
+                {{ form.email|add_attrs:'id:general_email'}}
+            </div>
+            <div class="form-group">
+                {{ form.password.label_tag }}
+                {{ form.password|add_attrs:'id:general_password'}}
+            </div>
+            <div class="form-group">
+                {{ form.profile_image.label_tag }}
+                {{ form.profile_image }}
+            </div>
+            <div class="form-group">
+                {{ form.furigana.label_tag }}
+                {{ form.furigana }}
+            </div>
+            <div class="form-group">
+                {{ form.gender.label_tag }}
+                {{ form.gender }}
+            </div>
+            <div class="form-group">
+                {{ form.age.label_tag }}
+                {{ form.age }}
+            </div>
+            <div class="form-group">
+                {{ form.bio.label_tag }}
+                {{ form.bio }}
+            </div>
+        </div>
+
+        <div id="adminFields" style="display: none;">
+            <div class="form-group">
+                {{ form.name.label_tag }}
+                {{ form.name|add_attrs:'id:admin_name' }}
+            </div>
+            <div class="form-group">
+                {{ form.email.label_tag }}
+                {{ form.email|add_attrs:'id:admin_email' }}
+            </div>
+            <div class="form-group">
+                {{ form.password.label_tag }}
+                {{ form.password|add_attrs:'id:admin_password' }}
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">作成</button>
+    </form>
+</div>
+
+<script src="{% static 'accounts/account_create.js' %}"></script>
+{% endblock %}
+

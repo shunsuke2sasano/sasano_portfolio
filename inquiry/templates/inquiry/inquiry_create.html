@@ -1,0 +1,15 @@
+<!-- templates/inquiry/inquiry_create.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>お問い合わせフォーム</title>
+</head>
+<body>
+    <h1>お問い合わせフォーム</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">送信</button>
+    </form>
+</body>
+</html>

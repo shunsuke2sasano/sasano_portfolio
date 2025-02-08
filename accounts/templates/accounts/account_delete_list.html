@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}アカウント削除一覧{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>アカウント削除一覧</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>名前</th>
+                <th>メールアドレス</th>
+                <th>ステータス</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for account in accounts %}
+            <tr>
+                <td>{{ account.name }}</td>
+                <td>{{ account.email }}</td>
+                <td>
+                    {% if not account.is_active %}
+                        無効
+                    {% else %}
+                        有効
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- 完全削除ボタン -->
+                    <form method="post" action="{% url 'accounts:account_delete_permanently' account.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('本当に削除しますか？');">
+                            完全に削除
+                        </button>
+                    </form>
+
+                    <!-- 復元ボタン -->
+                    <form method="post" action="{% url 'accounts:account_restore' account.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success btn-sm">復元</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="text-center mt-4">
+        <a href="{% url 'accounts:account_list' %}" class="btn btn-primary">アカウント一覧に戻る</a>
+    </div>
+</div>
+{% endblock %}

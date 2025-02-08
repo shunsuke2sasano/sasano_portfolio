@@ -1,0 +1,31 @@
+# Python関連の除外ファイル
+*.pyc
+*.pyo
+__pycache__/
+venv/
+.env
+.DS_Store
+
+# エディタ関連
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS関連
+Thumbs.db
+*.bak
+*.tmp
+.DS_Store
+
+# 一般的なログ・キャッシュ
+logs/
+*.log
+*.pid
+*.seed
+*.csv
+*.dat
+*.sqlite3
+db.sqlite3
+__pycache__/
+*.pyc
