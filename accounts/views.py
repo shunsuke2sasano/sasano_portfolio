@@ -4,7 +4,7 @@ from django.core.paginator import Paginator
 from django.contrib.auth import login, get_user_model, authenticate, logout
 from .forms import LoginForm
 from django.contrib import messages
-from .forms import AdminSettingsForm, AccountForm
+from .forms import AdminSettingsForm, AccountForm, AccountEditForm
 from .models import CustomUser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -284,3 +284,25 @@ def general_account_detail(request, user_id):
 def custom_logout_view(request):
     logout(request)
     return redirect('http://localhost:8000/accounts/login/') 
+
+@login_required
+@user_passes_test(admin_check)  # 管理者のみアクセス可能
+def account_edit(request, id):
+    user = get_object_or_404(CustomUser, id=id)
+
+    if request.method == 'POST':
+        form = AccountEditForm(request.POST, request.FILES, instance=user)
+        if form.is_valid():
+            user = form.save(commit=False)
+            if form.cleaned_data.get('password'):
+                user.set_password(form.cleaned_data.get('password'))  # パスワード変更があれば更新
+            user.save()
+            messages.success(request, "アカウント情報を更新しました。")
+            return redirect('accounts:account_list')
+
+        messages.error(request, "入力にエラーがあります。")
+
+    else:
+        form = AccountEditForm(instance=user)
+
+    return render(request, 'accounts/account_edit.html', {'form': form, 'user': user})
