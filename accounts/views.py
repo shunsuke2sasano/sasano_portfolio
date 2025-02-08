@@ -296,6 +296,7 @@ def account_edit(request, id):
             user = form.save(commit=False)
             if form.cleaned_data.get('password'):
                 user.set_password(form.cleaned_data.get('password'))  # パスワード変更があれば更新
+            user.is_active = form.cleaned_data.get('is_active') == 'True'
             user.save()
             messages.success(request, "アカウント情報を更新しました。")
             return redirect('accounts:account_list')
