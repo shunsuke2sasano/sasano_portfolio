@@ -91,19 +91,13 @@ def admin_settings(request, id):
                 user.set_password(form.cleaned_data.get('password'))
             user.save()
 
-            messages.success(request, "設定が更新されました。")
             return redirect('accounts:settings_complete', id=user.id)
         
         else:
             print('フォームのエラー:',form.errors)
-            messages.error(request, "入力にエラーがあります。修正してください。")
-
+            
     else:
         form = AdminSettingsForm(instance=user)
-    
-    storage = messages.get_messages(request)
-    for _ in storage:
-        pass
 
     return render(request, 'accounts/admin_settings.html', {'form': form, 'user': user})
 
