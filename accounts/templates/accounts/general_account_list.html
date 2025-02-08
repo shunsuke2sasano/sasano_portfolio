@@ -8,29 +8,55 @@
 <ul>
     {% for profile in profiles %}
         <li>
-            <!--プロフィール画像-->>
-            <img src="{{ profile.profile_image.url|default_if_none:'/media/profile_images/default_profile_image.jpg' }}" 
-                 alt="Profile Image" width="100">
+            {% if profile.profile_image %}
+                <img src="{{ profile.profile_image.url }}" alt="Profile Image" width="100">
+            {% else %}
+            <img src="{{ profile.profile_image.url|default:'/media/profile_images/default.jpg' }}" 
+            alt="Profile Image" width="100">
+            {% endif %}
             
-            <!--ユーザー名-->>
             <strong>
-                <a href="{% url 'accounts:general_account_detail' user_id=profile.user.id %}">
-                    {{ profile.user.name }}
+                <a href="{% url 'accounts:general_account_detail' user_id=profile.id %}">
+                    {{ profile.user.username|default:"未設定" }}
                 </a>
-            </strong> - {{ profile.get_gender_display }}
-
-            <!--いいねボタン-->>
-            <button class="like-btn" data-user-id="{{ profile.user.id }}">
-                👍 {{ profile.likes_count }}
+            </strong> - {{ profile.get_gender_display|default:"Not Specified" }}
+            <button class="like-btn" data-user-id="{{ profile.id }}">
+                👍 {{ profile.likes_count}}
             </button>
         </li>
+    {% empty %}
+        <li>No profiles available.</li>
     {% endfor %}
 </ul>
 
+
 <script>
-    const likeToggleUrl = "{% url 'accounts:like_toggle' %}";
-    const csrfToken = "{{ csrf_token }}";
+    // いいねボタンのクリックイベントを設定
+    document.querySelectorAll('.like-btn').forEach((button) => {
+        button.addEventListener('click', function () {
+            const userId = this.getAttribute('data-user-id'); // ボタンのdata-user-id属性から取得
+            const likeToggleUrl = `/accounts/like_toggle/${userId}/`; // 動的にURLを生成
+            const csrfToken = "{{ csrf_token|safe }}";
+
+            fetch(likeToggleUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({}),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.textContent = `👍 ${data.likes}`;
+                } else {
+                    alert('Failed to like the profile.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
 </script>
-<script src="{% static 'accounts/like_toggle.js' %}"></script>
 {% endblock %}
 

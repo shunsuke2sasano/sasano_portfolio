@@ -41,7 +41,7 @@ class CustomUser(AbstractUser, TimestampedModel):
     email = models.EmailField(max_length=255, unique=True)
     is_admin = models.BooleanField(default=False) 
     bio = models.TextField(max_length=1500, blank=True, null=True)  
-    profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True) 
+    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True, default='profile_images/default.jpg')
     is_deleted = models.BooleanField(default=False)  
 
     USERNAME_FIELD = "email"  

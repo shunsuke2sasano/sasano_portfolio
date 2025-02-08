@@ -61,7 +61,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'accounts/templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -86,8 +86,8 @@ DATABASES = {
         'NAME': 'portfolio_db',
         'USER': 'root',
         'PASSWORD': 'Bullshit03Sasano19',
-        'HOST': '172.19.0.2',  # コンテナ名を指定
-        'PORT': '3306',          # MySQLのデフォルトポート
+        'HOST': 'db',  # 修正: コンテナ名を合わせる
+        'PORT': '3306',
     }
 }
 
@@ -130,7 +130,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_DIRS = [BASE_DIR / 'static',]
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -147,7 +147,7 @@ INTERNAL_IPS = [
 
 MEDIA_URL = '/media/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR / 'media')
+MEDIA_ROOT =  os.path.join(BASE_DIR, 'media')
 
 # settings.py
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

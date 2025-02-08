@@ -16,8 +16,8 @@
 </button>
 
 <script>
-     const likeToggleUrl = "{% url 'accounts:like_toggle' %}";
-     const csrfToken = "{{ csrf_token }}";
+    const likeToggleUrl = "{% url 'accounts:like_toggle' profile.user.id %}";
+    const csrfToken = "{{ csrf_token|safe  }}";
 </script>
 
 <script src="{% static 'accounts/like_toggle.js' %}"></script>

@@ -20,7 +20,7 @@ urlpatterns = [
     path('toggle_status/<int:id>/', views.toggle_status, name='toggle_status'),  # ステータス切り替え
     path('general_accounts/', views.general_account_list, name='general_account_list'), #一般
     path('general_accounts/<int:user_id>/', views.general_account_detail, name='general_account_detail'), #アカウント詳細
-    path('like_toggle/', views.like_toggle, name='like_toggle'), #いいね機能
+    path('like_toggle/<int:user_id>/', views.like_toggle, name='like_toggle'),
     path('monthly_ranking/', views.monthly_like_ranking, name='monthly_like_ranking'), #月のいいねランキング
     path('account_edit/<int:id>/', views.account_edit, name='account_edit'),
 

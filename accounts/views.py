@@ -170,6 +170,8 @@ def account_create(request):
                 user.is_superuser = True
             user.set_password(form.cleaned_data.get('password'))
             user.save()
+
+            GeneralUserProfile.objects.create(user=user, likes_count=0)
             messages.success(request, "アカウントが作成されました。")
             return redirect('accounts:account_list')
         else:
@@ -236,34 +238,38 @@ def account_restore(request, pk):
         return redirect('accounts:account_delete_list')
     return redirect('accounts:account_delete_list')
 
-@login_required
 def general_account_list(request):
     profiles = GeneralUserProfile.objects.all()
+    logger.debug(f"取得したプロフィール: {profiles}") 
+    logger.debug(f"Profiles passed to template: {profiles}")
     return render(request, 'accounts/general_account_list.html', {'profiles': profiles})
 
-def like_toggle(request):
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=405)
+@csrf_exempt
+def like_toggle(request, user_id):
+    """
+    いいねボタンの状態をトグルするビュー
+    """
+    if request.method == 'POST':
+        try:
+            # 該当ユーザーのプロフィールを取得
+            profile = get_object_or_404(GeneralUserProfile, user_id=user_id)
 
-    user_id = request.POST.get('user_id')
-    if not user_id:
-        return JsonResponse({'success': False, 'message': 'User ID is required'}, status=400)
+            # 現在の状態をトグル
+            if request.session.get(f'liked_{user_id}', False):
+                profile.likes_count -= 1  # いいねを解除
+                request.session[f'liked_{user_id}'] = False
+            else:
+                profile.likes_count += 1  # いいねを追加
+                request.session[f'liked_{user_id}'] = True
 
-    # `GeneralUserProfile` ではなく `CustomUser` を直接取得
-    liked_user = get_object_or_404(CustomUser, id=user_id)
+            # プロフィールを保存
+            profile.save()
 
-    # Like のトグル処理
-    like, created = Like.objects.get_or_create(user=request.user, liked_user=liked_user)
-    if created:
-        liked_user.generaluserprofile.likes_count += 1
-    else:
-        like.delete()
-        liked_user.generaluserprofile.likes_count -= 1
+            return JsonResponse({'success': True, 'likes': profile.likes_count})
+        except GeneralUserProfile.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Profile not found'}, status=404)
 
-    liked_user.generaluserprofile.save()
-
-    return JsonResponse({'success': True, 'likes_count': liked_user.generaluserprofile.likes_count})
-   
+    return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
 
 
 @login_required

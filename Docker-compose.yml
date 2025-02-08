@@ -1,19 +1,18 @@
 services:
   db:
     image: mysql:8.0
-    container_name: portfolio_db
+    container_name: portfolio_db  # コンテナ名を固定
     environment:
       MYSQL_ROOT_PASSWORD: Bullshit03Sasano19
       MYSQL_DATABASE: portfolio_db
     ports:
       - "3307:3306"
-    
     volumes:
       - db_data:/var/lib/mysql
 
   web:
     build: .
-    container_name: portfolio_web
+    container_name: portfolio_web  # コンテナ名を固定
     command: python manage.py runserver 0.0.0.0:8000
     volumes: 
       - .:/app 
@@ -24,13 +23,14 @@ services:
       - db
     environment:
       DJANGO_SETTINGS_MODULE: "config.settings"
-      DB_HOST: portfolio_db 
+      DB_HOST: db  # 'db' に統一
       DB_PORT: "3306"
       DB_NAME: portfolio_db
       DB_USER: root
       DB_PASSWORD: Bullshit03Sasano19
-    
 
 volumes:
   db_data: {}
+
+
 
