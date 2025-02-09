@@ -86,7 +86,7 @@ DATABASES = {
         'NAME': 'portfolio_db',
         'USER': 'root',
         'PASSWORD': 'Bullshit03Sasano19',
-        'HOST': 'db',  # 修正: コンテナ名を合わせる
+        'HOST': 'portfolio_db',  # 修正: コンテナ名を合わせる
         'PORT': '3306',
     }
 }

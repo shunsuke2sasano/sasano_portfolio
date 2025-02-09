@@ -9,6 +9,8 @@ services:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
+    networks:
+      - portfolio_network
 
   web:
     build: .
@@ -23,14 +25,17 @@ services:
       - db
     environment:
       DJANGO_SETTINGS_MODULE: "config.settings"
-      DB_HOST: db  # 'db' に統一
+      DB_HOST: portfolio_db  # 'db' に統一
       DB_PORT: "3306"
       DB_NAME: portfolio_db
       DB_USER: root
       DB_PASSWORD: Bullshit03Sasano19
+    networks:
+      - portfolio_network
 
 volumes:
   db_data: {}
 
-
+networks:
+  portfolio_network:
 

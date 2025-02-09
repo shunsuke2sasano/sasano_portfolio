@@ -2,6 +2,8 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.timezone import now
 from django.db import models
+from django.core.exceptions import ValidationError
+
 
 # ✅ `common` を削除し、直接 `TimestampedModel` を定義
 class TimestampedModel(models.Model):
@@ -35,26 +37,46 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(name, email, password, **extra_fields)
 
 # カスタムユーザーモデル
-class CustomUser(AbstractUser, TimestampedModel):  
-    username = None  
-    name = models.CharField(max_length=255, unique=True) 
-    email = models.EmailField(max_length=255, unique=True)
-    is_admin = models.BooleanField(default=False) 
-    bio = models.TextField(max_length=1500, blank=True, null=True)  
-    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True, default='profile_images/default.jpg')
-    is_deleted = models.BooleanField(default=False)  
+class CustomUser(AbstractUser):
+    username = None  # ユーザーネームは使用しない
+    name = models.CharField(max_length=255, unique=True, verbose_name="名前")
+    email = models.EmailField(max_length=255, unique=True, verbose_name="メールアドレス")
+    is_admin = models.BooleanField(default=False, verbose_name="管理者フラグ")
+    bio = models.TextField(
+        max_length=1500,
+        blank=True,
+        null=True,
+        verbose_name="自己紹介"
+    )
+    profile_image = models.ImageField(
+        upload_to='profile_images/',
+        null=True,
+        blank=True,
+        default='profile_images/default_profile_image.jpg',
+        verbose_name="プロフィール画像"
+    )
+    age = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="年齢"
+    )
+    is_deleted = models.BooleanField(default=False, verbose_name="削除フラグ")
 
-    USERNAME_FIELD = "email"  
-    REQUIRED_FIELDS = ["name"] 
+    USERNAME_FIELD = "email"  # 認証に使用するフィールド
+    REQUIRED_FIELDS = ["name"]
 
-    objects = CustomUserManager() 
+    def clean(self):
+        """年齢のバリデーション"""
+        if self.age is not None and (self.age < 0 or self.age > 999):
+            raise ValidationError({'age': '年齢は0以上999以下で入力してください。'})
 
     def __str__(self):
         return self.email
 
     def delete(self, using=None, keep_parents=False):
-        """論理削除を実現するためのオーバーライドメソッド"""
-        super(CustomUser, self).delete(using=using, keep_parents=keep_parents)
+        """論理削除: データを物理削除せずフラグで管理"""
+        self.is_deleted = True
+        self.save()
 
     def restore(self):
         """論理削除されたデータの復元"""
@@ -62,7 +84,9 @@ class CustomUser(AbstractUser, TimestampedModel):
         self.save()
 
     class Meta:
-        ordering = ['-created_at']  # デフォルトの並び順
+        ordering = ['-id']
+        verbose_name = "カスタムユーザー"
+        verbose_name_plural = "カスタムユーザー一覧"
 
 # 一般ユーザーのプロフィールモデル
 class UserProfile(models.Model):

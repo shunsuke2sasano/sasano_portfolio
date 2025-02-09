@@ -1,32 +1,39 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const generalRadio = document.getElementById('generalRadio');
-    const adminRadio = document.getElementById('adminRadio');
-    const generalFields = document.getElementById('generalFields');
-    const adminFields = document.getElementById('adminFields');
+document.addEventListener("DOMContentLoaded", function () {
+    const generalFields = document.querySelector(".general-fields");
+    const accountTypeRadios = document.querySelectorAll("input[name='account_type']");
+    const updateButton = document.querySelector("button[type='submit']"); // 更新ボタンを取得
+    const form = document.querySelector("form"); // フォーム全体を取得
 
-    // フィールドの有効/無効を切り替える関数
-    function toggleFields() {
-        if (generalRadio.checked) {
-            generalFields.style.display = 'block';
-            adminFields.style.display = 'none';
-
-            // 無効化/有効化
-            generalFields.querySelectorAll('input, select, textarea').forEach(field => field.disabled = false);
-            adminFields.querySelectorAll('input, select, textarea').forEach(field => field.disabled = true);
-        } else if (adminRadio.checked) {
-            generalFields.style.display = 'none';
-            adminFields.style.display = 'block';
-
-            // 無効化/有効化
-            generalFields.querySelectorAll('input, select, textarea').forEach(field => field.disabled = true);
-            adminFields.querySelectorAll('input, select, textarea').forEach(field => field.disabled = false);
-        }
+    // バリデーションエラーをクリアする関数
+    function clearValidationErrors() {
+        const errorMessages = document.querySelectorAll(".validation-error");
+        errorMessages.forEach(error => {
+            error.textContent = ""; // エラーメッセージを削除
+        });
     }
 
-    // 初期化（ページロード時に適用）
-    toggleFields();
+    // 入力項目の表示/非表示を切り替える関数
+    function toggleFields() {
+        generalFields.style.display = accountTypeRadios[0].checked ? "block" : "none";
+    }
 
-    // ラジオボタンの変更イベントでフォームを切り替える
-    generalRadio.addEventListener('change', toggleFields);
-    adminRadio.addEventListener('change', toggleFields);
+    // ラジオボタンの変更時にバリデーションエラーを消去し、フィールド表示を更新
+    accountTypeRadios.forEach(radio => {
+        radio.addEventListener("change", function () {
+            clearValidationErrors(); // エラー消去
+            toggleFields(); // フィールドの切り替え
+        });
+    });
+
+    // フォーム送信時にバリデーションエラーを消去
+    if (form) {
+        form.addEventListener("submit", function (event) {
+            clearValidationErrors(); // エラー消去
+            // フォーム送信を続行（デフォルト動作）
+        });
+    }
+
+    // ページ初期表示時に適用
+    toggleFields();
 });
+

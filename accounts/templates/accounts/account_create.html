@@ -1,86 +1,83 @@
 {% extends "base.html" %}
 {% load static %}
-{% load custom_filters %}
 
 {% block title %}アカウント作成{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <h2>アカウント作成</h2>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
-        <div>
+
+        <!-- アカウント種別選択 -->
+        <div class="form-group">
             <label>
-                <input type="radio" name="account_type" value="general" id="generalRadio" checked>
+                <input type="radio" name="account_type" value="general" class="account-type" {% if form.account_type.value == "general" %}checked{% endif %}>
                 一般
             </label>
             <label>
-                <input type="radio" name="account_type" value="admin" id="adminRadio">
+                <input type="radio" name="account_type" value="admin" class="account-type" {% if form.account_type.value == "admin" %}checked{% endif %}>
                 管理者
             </label>
         </div>
 
-        <!-- エラーメッセージ表示 -->
-        {% if form.errors %}
-        <div class="alert alert-danger">
-            <ul>
-                {% for field, errors in form.errors.items %}
-                    {% for error in errors %}
-                        <li>{{ field }}: {{ error }}</li>
-                    {% endfor %}
-                {% endfor %}
-            </ul>
+        <!-- 共通の入力項目 -->
+        <div class="form-group">
+            {{ form.name.label_tag }}
+            {{ form.name }}
+            {% for error in form.name.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
         </div>
-        {% endif %}
 
-        <!-- フォームフィールドの描画 -->
-        <div id="generalFields">
-            <div class="form-group">
-                {{ form.name.label_tag }}
-                {{ form.name|add_attrs:'id:general_name'}}
-            </div>
-            <div class="form-group">
-                {{ form.email.label_tag }}
-                {{ form.email|add_attrs:'id:general_email'}}
-            </div>
-            <div class="form-group">
-                {{ form.password.label_tag }}
-                {{ form.password|add_attrs:'id:general_password'}}
-            </div>
+        <div class="form-group">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {% for error in form.email.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.password.label_tag }}
+            {{ form.password }}
+            {% for error in form.password.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <!-- 一般ユーザーの入力項目 -->
+        <div class="general-fields">
             <div class="form-group">
                 {{ form.profile_image.label_tag }}
                 {{ form.profile_image }}
+                {% for error in form.profile_image.errors %}
+                    <div class="text-danger validation-error">{{ error }}</div>
+                {% endfor %}
             </div>
+
             <div class="form-group">
                 {{ form.furigana.label_tag }}
                 {{ form.furigana }}
+                {% for error in form.furigana.errors %}
+                    <div class="text-danger validation-error">{{ error }}</div>
+                {% endfor %}
             </div>
-            <div class="form-group">
-                {{ form.gender.label_tag }}
-                {{ form.gender }}
-            </div>
+
             <div class="form-group">
                 {{ form.age.label_tag }}
                 {{ form.age }}
+                {% for error in form.age.errors %}
+                    <div class="text-danger validation-error">{{ error }}</div>
+                {% endfor %}
             </div>
+
             <div class="form-group">
                 {{ form.bio.label_tag }}
                 {{ form.bio }}
-            </div>
-        </div>
-
-        <div id="adminFields" style="display: none;">
-            <div class="form-group">
-                {{ form.name.label_tag }}
-                {{ form.name|add_attrs:'id:admin_name' }}
-            </div>
-            <div class="form-group">
-                {{ form.email.label_tag }}
-                {{ form.email|add_attrs:'id:admin_email' }}
-            </div>
-            <div class="form-group">
-                {{ form.password.label_tag }}
-                {{ form.password|add_attrs:'id:admin_password' }}
+                {% for error in form.bio.errors %}
+                    <div class="text-danger validation-error">{{ error }}</div>
+                {% endfor %}
             </div>
         </div>
 
@@ -89,5 +86,35 @@
 </div>
 
 <script src="{% static 'accounts/account_create.js' %}"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const generalFields = document.querySelector(".general-fields");
+        const accountTypeRadios = document.querySelectorAll("input[name='account_type']");
+        
+        // バリデーションエラーを消去する関数
+        function clearValidationErrors() {
+            const errorMessages = document.querySelectorAll(".validation-error");
+            errorMessages.forEach(error => {
+                error.textContent = ""; // バリデーションエラーをクリア
+            });
+        }
+
+        // 入力項目の表示/非表示を切り替える関数
+        function toggleFields() {
+            generalFields.style.display = accountTypeRadios[0].checked ? "block" : "none";
+        }
+
+        // ラジオボタンの変更時にバリデーションエラーを消去
+        accountTypeRadios.forEach(radio => {
+            radio.addEventListener("change", clearValidationErrors);
+            radio.addEventListener("change", toggleFields);
+        });
+
+        toggleFields();  // 初期状態で適用
+    });
+</script>
+
 {% endblock %}
+
 
