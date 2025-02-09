@@ -5,7 +5,7 @@ from .views import inquiry_create
 app_name = 'inquiry'
 
 urlpatterns = [
-    path('', views.inquiry_list, name='inquiry_list'),
+    path('', views.inquiry_list, name='list'),
     path('<int:id>/', views.inquiry_detail, name='inquiry_detail'),
     path('categories/', views.category_list, name='category_list'),
     path('categories/add/', views.category_add, name='category_add'),

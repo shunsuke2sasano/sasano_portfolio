@@ -1,21 +1,31 @@
 {% extends "dashboard/base.html" %}
 
+{% block title %}管理者ダッシュボード{% endblock %}
+
 {% block content %}
-<h1>管理者ダッシュボード</h1>
-<div class="rankings">
-    <h2>月間いいねランキング</h2>
-    <ul>
+<div class="container mt-4">
+    <h1 class="mb-4">管理者ダッシュボード</h1>
+
+    <h3>月間いいねランキング</h3>
+    <ul class="list-group mb-4">
         {% for profile in monthly_profiles %}
-        <li>{{ profile.user.name }}: {{ profile.total_likes }} いいね</li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ profile.name }} ({{ profile.total_likes }} いいね)
+        </li>
+        {% empty %}
+        <li class="list-group-item">データがありません</li>
         {% endfor %}
     </ul>
 
-    <h2>年間いいねランキング</h2>
-    <ul>
+    <h3>年間いいねランキング</h3>
+    <ul class="list-group mb-4">
         {% for profile in yearly_profiles %}
-        <li>{{ profile.user.name }}: {{ profile.total_likes }} いいね</li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ profile.name }} ({{ profile.total_likes }} いいね)
+        </li>
+        {% empty %}
+        <li class="list-group-item">データがありません</li>
         {% endfor %}
     </ul>
 </div>
-
 {% endblock %}

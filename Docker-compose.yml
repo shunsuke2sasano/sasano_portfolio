@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:8.0
-    container_name: portfolio_db  # コンテナ名を固定
+    container_name: db  # コンテナ名を固定
     environment:
       MYSQL_ROOT_PASSWORD: Bullshit03Sasano19
       MYSQL_DATABASE: portfolio_db
@@ -11,6 +11,11 @@ services:
       - db_data:/var/lib/mysql
     networks:
       - portfolio_network
+    healthcheck:  # ✅ MySQL の起動完了を待つ設定
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   web:
     build: .
@@ -25,7 +30,7 @@ services:
       - db
     environment:
       DJANGO_SETTINGS_MODULE: "config.settings"
-      DB_HOST: portfolio_db  # 'db' に統一
+      DB_HOST: db  # 'db' に統一
       DB_PORT: "3306"
       DB_NAME: portfolio_db
       DB_USER: root

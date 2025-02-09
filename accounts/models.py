@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.timezone import now
@@ -26,22 +27,23 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, name, email, password=None, **extra_fields):
-        extra_fields.setdefault("is_staff", True)
-        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_staff", True)  # 🔥 is_staff を True にする
+        extra_fields.setdefault("is_superuser", True)  # 🔥 is_superuser を True にする
 
         if extra_fields.get("is_staff") is not True:
             raise ValueError("スーパーユーザーは is_staff=True にする必要があります。")
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("スーパーユーザーは is_superuser=True にする必要があります。")
 
-        return self.create_user(name, email, password, **extra_fields)
-
+        return self.create_user(name=name, email=email, password=password, **extra_fields)
+    
 # カスタムユーザーモデル
-class CustomUser(AbstractUser):
+class CustomUser(AbstractUser, PermissionsMixin):
     username = None  # ユーザーネームは使用しない
     name = models.CharField(max_length=255, unique=True, verbose_name="名前")
     email = models.EmailField(max_length=255, unique=True, verbose_name="メールアドレス")
     is_admin = models.BooleanField(default=False, verbose_name="管理者フラグ")
+    is_staff = models.BooleanField(default=False, verbose_name="スタッフフラグ")  # 🔥 追加
     bio = models.TextField(
         max_length=1500,
         blank=True,
@@ -64,7 +66,6 @@ class CustomUser(AbstractUser):
         ('active', '有効'),
         ('inactive', '無効'),
     ]
-    
     status = models.CharField(
         max_length=8,
         choices=STATUS_CHOICES,
@@ -72,6 +73,15 @@ class CustomUser(AbstractUser):
         verbose_name="ステータス"
     )
     is_deleted = models.BooleanField(default=False, verbose_name="削除フラグ")
+
+    objects = CustomUserManager()  # 🔥 Manager を設定
+
+    likes_received = models.ManyToManyField(
+    "self",
+    symmetrical=False,
+    related_name="received_likes_custom",
+    verbose_name="いいねを受け取ったユーザー"
+    )
 
     USERNAME_FIELD = "email"  # 認証に使用するフィールド
     REQUIRED_FIELDS = ["name"]
@@ -114,7 +124,10 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
 
-    likes = models.ManyToManyField("self", symmetrical=False, related_name="liked_by", blank=True)
+    likes = likes = models.ManyToManyField(
+    CustomUser,
+    related_name="profile_likes"  # ✅ `liked_profiles` と被らないよう変更
+)
     
     def delete(self, using=None, keep_parents=False):
         """論理削除を行うメソッド"""
@@ -136,7 +149,11 @@ class UserProfile(models.Model):
 # いいね機能のモデル
 class Like(TimestampedModel):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="likes_given")
-    liked_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="likes_received")
+    liked_user = models.ForeignKey(
+    CustomUser,
+    on_delete=models.CASCADE,
+    related_name="likes_received_records",  # 修正
+)
     profile = models.ForeignKey('users.Profile', on_delete=models.CASCADE, related_name="profile_likes", null=True, blank=True)
     def __str__(self):
         return f"{self.user} likes {self.liked_user}"

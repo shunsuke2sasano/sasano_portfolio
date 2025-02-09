@@ -1,18 +1,48 @@
 {% extends "dashboard/base.html" %}
 
+{% block title %}ユーザーダッシュボード{% endblock %}
+
 {% block content %}
-<h1>ユーザーダッシュボード</h1>
-
-<div class="user-stats">
-    <p>年間のいいね数: {{ yearly_likes }}</p>
-    <p>月間のいいね数: {{ monthly_likes }}</p>
-</div>
-
 <div class="container mt-4">
-    <h2>一般ユーザー向けメニュー</h2>
-    <a href="{% url 'accounts:general_account_list' %}" class="btn btn-primary">アカウント一覧</a>
-    <a href="{% url 'inquiry:list' %}" class="btn btn-secondary">お問合せ一覧</a>
-</div>
+    <h1 class="mb-4">ユーザーダッシュボード</h1>
 
+    <!-- いいね数表示 -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">年間トータルいいね数</h5>
+                    <p class="display-4 text-primary">{{ yearly_likes }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">月間トータルいいね数</h5>
+                    <p class="display-4 text-success">{{ monthly_likes }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- メニュー -->
+    <div class="mt-5">
+        <h2>メニュー</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <a href="{% url 'accounts:general_account_list' %}" class="btn btn-primary btn-lg btn-block">
+                    アカウント一覧
+                </a>
+            </div>
+            <div class="col-md-6">
+                <a href="{% url 'inquiry:inquiry_list' %}" class="btn btn-secondary btn-lg btn-block">
+                    お問合せ一覧
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
+
 

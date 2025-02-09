@@ -20,7 +20,7 @@
             <tr id="account-row-{{ user.id }}">
                 <td>{{ user.email }}</td>
                 <td>{{ user.name }}</td>
-                <td>
+                <td class="status-cell">
                     {% if user.is_active %}
                         有効
                     {% else %}
@@ -30,7 +30,7 @@
                 <td>
                     <form method="post" action="{% url 'accounts:account_delete' user.id %}" style="display: inline;">
                         {% csrf_token %}
-                        <button type="submit" id="delete-btn-{{ user.id }}" name="delete-btn" class="btn btn-danger btn-sm">削除</button>
+                        <button type="submit" id="delete-btn-{{ user.id }}" class="btn btn-danger btn-sm">削除</button>
                     </form>
                     <a href="{% url 'accounts:account_edit' user.id %}" class="btn btn-primary btn-sm">編集</a>
                     <button class="btn btn-secondary btn-sm toggle-status-btn" data-id="{{ user.id }}">
@@ -38,6 +38,7 @@
                     </button>
                 </td>
             </tr>
+            
             {% endfor %}
             <script src="{% static 'accounts/toggle_status.js' %}" defer></script>
         </tbody>

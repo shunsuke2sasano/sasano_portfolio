@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}年間いいねランキング{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>年間いいねランキング</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>順位</th>
+                <th>ユーザー</th>
+                <th>いいね数</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in ranking %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.liked_user }}</td>
+                    <td>{{ item.like_count }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3">ランキングデータがありません。</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
