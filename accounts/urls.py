@@ -21,7 +21,7 @@ urlpatterns = [
     path('account_delete_list/', views.account_delete_list, name='account_delete_list'),  # 削除済みアカウント一覧
     path('account_delete/<int:id>/', views.account_delete, name='account_delete'),  # ソフトデリート
     path('account_restore/<int:id>/', views.account_restore, name='account_restore'),  # アカウント復旧
-    path('account_delete_permanently/<int:id>/', views.account_delete_permanently, name='account_delete_permanently'),# 完全削除
+    path('account_delete_permanently/<int:user_id>/', views.account_delete_permanently, name='account_delete_permanently'),# 完全削除
     path('toggle_status/<int:id>/', views.toggle_status, name='toggle_status'), # ステータス切り替え
 
     # 一般ユーザー関連
@@ -29,7 +29,7 @@ urlpatterns = [
     path('general_accounts/<int:user_id>/', views.general_account_detail, name='general_account_detail'), #アカウント詳細
    
    # いいね機能
-    path('like_toggle/<int:user_id>/', views.like_toggle, name='like_toggle'),# いいね機能
+    path('like_toggle/<int:id>/', views.like_toggle, name='like_toggle'),# いいね機能
     path('monthly_ranking/', views.monthly_like_ranking, name='monthly_like_ranking'), #月のいいねランキング
     path('yearly_ranking/', views.yearly_like_ranking, name='yearly_like_ranking'),#年のいいねランキング
 ]

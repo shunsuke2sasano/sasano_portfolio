@@ -91,7 +91,7 @@ def settings_complete(request, id):
 @login_required
 @user_passes_test(is_admin)
 def account_list(request):
-    users = CustomUser.objects.all().order_by("-id")  # ID順にソート
+    users = CustomUser.objects.filter(is_deleted=False).order_by("-id")  # ID順にソート
     paginator = Paginator(users, 5)  # 5件ごとにページネーション
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
@@ -105,25 +105,25 @@ def general_account_list(request):
     return render(request, 'accounts/general_account_list.html', {'profiles': profiles})
 
 # **アカウント詳細**
-def general_account_detail(request, user_id):
+def general_account_detail(request, id):
     """一般ユーザーのアカウント詳細を表示"""
-    profile = get_object_or_404(GeneralUserProfile, user_id=user_id)
+    profile = get_object_or_404(GeneralUserProfile, user_id= id)
     return render(request, 'accounts/general_account_detail.html', {'profile': profile})
 
 # **アカウント削除（論理削除）**
 @login_required
-@user_passes_test(is_admin)
 def account_delete(request, id):
-    account = get_object_or_404(CustomUser, id=id)
-    if request.method == 'POST':
-        if not account.is_deleted:
-            account.is_deleted = True
-            account.save()
-            messages.success(request, "アカウントを削除しました。")
-        else:
-            messages.error(request, "このアカウントはすでに削除されています。")
-    return redirect('accounts:account_list')
-
+    """ アカウントの論理削除（Ajax対応） """
+    if request.method == "POST":
+        try:
+            user = get_object_or_404(CustomUser, id=id)
+            user.is_deleted = True  # 論理削除フラグを設定
+            user.is_active = False  # 無効化
+            user.save()
+            return JsonResponse({"success": True, "message": "アカウントを削除しました。", "user_id": id})
+        except CustomUser.DoesNotExist:
+            return JsonResponse({"success": False, "message": "アカウントが見つかりません。"}, status=404)
+    return JsonResponse({"success": False, "message": "無効なリクエストです。"}, status=400)
 
 # **削除済みアカウント一覧**
 @login_required
@@ -136,8 +136,8 @@ def account_delete_list(request):
 # **完全削除**
 @login_required
 @user_passes_test(is_admin)
-def account_delete_permanently(request, id):
-    user = get_object_or_404(CustomUser, id=id)
+def account_delete_permanently(request, user_id):
+    user = get_object_or_404(CustomUser, id=user_id)
 
     if request.method == 'POST':
         try:
@@ -147,11 +147,11 @@ def account_delete_permanently(request, id):
                 Like.objects.filter(liked_user=user).delete()
 
                 user.delete()
-                messages.success(request, f"アカウント {user.email} を完全に削除しました。")
+                return JsonResponse({'success': True, 'message': f"アカウント {user.email} を完全に削除しました。"})
         except Exception as e:
-            messages.error(request, f"削除に失敗しました: {str(e)}")
+            return JsonResponse({'success': False, 'message': f"削除に失敗しました: {str(e)}"})
 
-    return redirect('accounts:account_delete_list')
+    return JsonResponse({'success': False, 'message': "不正なリクエストです。"}, status=400)
 
 
 # **アカウント復元**

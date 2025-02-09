@@ -1,27 +1,33 @@
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOMContentLoaded fired");
 
+    // 削除ボタンの取得
     const deleteButtons = document.querySelectorAll(".delete-btn");
 
-    const csrfTokenElement = document.querySelector("[name=csrfmiddlewaretoken]");
-    const csrfToken = csrfTokenElement ? csrfTokenElement.value : null;
+    // CSRFトークンの取得
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    if (!csrfToken) {
+        console.error("CSRF token not found in the DOM!");
+        return;
+    }
 
     deleteButtons.forEach(button => {
-        button.addEventListener("click", function (event) {
-            event.preventDefault();
-
+        button.addEventListener("click", function () {
             const userId = this.getAttribute("data-id");
             if (!userId) {
-                console.error("User ID not found on button:", this);
+                console.error("User ID not found!");
                 return;
             }
 
-            const url = `/accounts/account_delete/${userId}/`;
+            if (!confirm("本当にこのアカウントを削除しますか？")) {
+                return;
+            }
 
-            fetch(url, {
+            fetch(`/accounts/account_delete/${userId}/`, {
                 method: "POST",
                 headers: {
                     "X-CSRFToken": csrfToken,
+                    "Content-Type": "application/json",
                 },
             })
                 .then(response => {
@@ -32,14 +38,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 })
                 .then(data => {
                     if (data.success) {
-                        // 対象行を削除
-                        const row = document.querySelector(`#account-row-${userId}`);
+                        alert(data.message);
+                        const row = document.getElementById(`account-row-${userId}`);
                         if (row) {
                             row.remove();
                         }
-                        alert(data.message);
                     } else {
-                        alert("エラー: " + data.message);
+                        alert("削除に失敗しました: " + data.message);
                     }
                 })
                 .catch(error => {
