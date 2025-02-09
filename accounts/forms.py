@@ -126,6 +126,10 @@ class AccountForm(forms.ModelForm):
         label="種別",
         required=True,
     )
+    STATUS_CHOICES = [
+        ('active', '有効'),
+        ('inactive', '無効'),
+    ]
 
     name = forms.CharField(
         max_length=255,
@@ -188,10 +192,17 @@ class AccountForm(forms.ModelForm):
         widget=forms.Textarea(attrs={'class': 'form-control'}),
         label="自己紹介",
     )
+    status = forms.ChoiceField(
+        choices=STATUS_CHOICES,
+        widget=forms.RadioSelect(attrs={'class': 'form-check-input'}),
+        label="ステータス",
+        initial='active',
+        required=True
+    )
 
     class Meta:
         model = CustomUser
-        fields = ['name', 'email', 'password', 'profile_image', 'furigana', 'age', 'bio']
+        fields = ['name', 'email', 'password', 'profile_image', 'furigana', 'age', 'bio', 'status']
 
     def clean_password(self):
         """パスワードバリデーション"""

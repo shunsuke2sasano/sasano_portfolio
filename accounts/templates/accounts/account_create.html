@@ -11,14 +11,17 @@
 
         <!-- アカウント種別選択 -->
         <div class="form-group">
-            <label>
-                <input type="radio" name="account_type" value="general" class="account-type" {% if form.account_type.value == "general" %}checked{% endif %}>
-                一般
-            </label>
-            <label>
-                <input type="radio" name="account_type" value="admin" class="account-type" {% if form.account_type.value == "admin" %}checked{% endif %}>
-                管理者
-            </label>
+            <label class="form-label">アカウント種別</label>
+            <div>
+                <label class="form-check-label">
+                    <input type="radio" name="account_type" value="general" class="form-check-input" {% if form.account_type.value == "general" %}checked{% endif %}>
+                    一般
+                </label>
+                <label class="form-check-label ms-3">
+                    <input type="radio" name="account_type" value="admin" class="form-check-input" {% if form.account_type.value == "admin" %}checked{% endif %}>
+                    管理者
+                </label>
+            </div>
         </div>
 
         <!-- 共通の入力項目 -->
@@ -42,6 +45,24 @@
             {{ form.password.label_tag }}
             {{ form.password }}
             {% for error in form.password.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <!-- ステータスの入力項目 -->
+        <div class="form-group">
+            <label class="form-label">ステータス</label>
+            <div>
+                <label class="form-check-label">
+                    <input type="radio" name="status" value="active" class="form-check-input" {% if form.status.value == "active" %}checked{% endif %}>
+                    有効
+                </label>
+                <label class="form-check-label ms-3">
+                    <input type="radio" name="status" value="inactive" class="form-check-input" {% if form.status.value == "inactive" %}checked{% endif %}>
+                    無効
+                </label>
+            </div>
+            {% for error in form.status.errors %}
                 <div class="text-danger validation-error">{{ error }}</div>
             {% endfor %}
         </div>
@@ -81,7 +102,7 @@
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">作成</button>
+        <button type="submit" class="btn btn-primary mt-3">作成</button>
     </form>
 </div>
 
@@ -116,5 +137,3 @@
 </script>
 
 {% endblock %}
-
-

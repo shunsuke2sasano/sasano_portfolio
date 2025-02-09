@@ -3,7 +3,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const accountTypeRadios = document.querySelectorAll("input[name='account_type']");
     const updateButton = document.querySelector("button[type='submit']"); // 更新ボタンを取得
     const form = document.querySelector("form"); // フォーム全体を取得
-
+    const statusRadios = document.querySelectorAll("input[name='status']");
+    
+    // ステータスの変更イベント
+    statusRadios.forEach(radio => {
+        radio.addEventListener("change", function () {
+            console.log(`ステータスが変更されました: ${this.value}`);
+        });
+    });
     // バリデーションエラーをクリアする関数
     function clearValidationErrors() {
         const errorMessages = document.querySelectorAll(".validation-error");

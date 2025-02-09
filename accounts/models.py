@@ -60,6 +60,17 @@ class CustomUser(AbstractUser):
         blank=True,
         verbose_name="年齢"
     )
+    STATUS_CHOICES = [
+        ('active', '有効'),
+        ('inactive', '無効'),
+    ]
+    
+    status = models.CharField(
+        max_length=8,
+        choices=STATUS_CHOICES,
+        default='active',
+        verbose_name="ステータス"
+    )
     is_deleted = models.BooleanField(default=False, verbose_name="削除フラグ")
 
     USERNAME_FIELD = "email"  # 認証に使用するフィールド
