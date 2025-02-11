@@ -11,5 +11,4 @@ urlpatterns = [
     path('categories/add/', views.category_add, name='category_add'),
     path('categories/edit/<int:id>/', views.category_edit, name='category_edit'),
     path('categories/delete/<int:id>/', views.category_delete, name='category_delete'),
-    path('create/', inquiry_create, name='inquiry_create'),
 ]

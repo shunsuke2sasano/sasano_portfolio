@@ -83,11 +83,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv("DB_NAME", "portfolio_db"),
-        'USER': os.getenv("DB_USER", "root"),
-        'PASSWORD': os.getenv("DB_PASSWORD", "Bullshit03Sasano19"),
-        'HOST': os.getenv("DB_HOST", "db"),  # ← 修正 (Docker Compose の service 名を 'db' に統一)
-        'PORT': os.getenv("DB_PORT", "3306"),  # ← 修正 (コンテナ内のポートは 3306)
+        'NAME': 'portfolio_db',
+        'USER': 'root',
+        'PASSWORD': 'Bullshit03Sasano19',
+        'HOST': 'db',  
+        'PORT': '3306',  
     }
 }
 

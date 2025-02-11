@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.timezone import now
 from django.db import models
 from django.core.exceptions import ValidationError
+import re
 
 
 # ✅ `common` を削除し、直接 `TimestampedModel` を定義
@@ -37,11 +38,12 @@ class CustomUserManager(BaseUserManager):
 
         return self.create_user(name=name, email=email, password=password, **extra_fields)
     
-# カスタムユーザーモデル
+# 管理者モデル
 class CustomUser(AbstractUser, PermissionsMixin):
     username = None  # ユーザーネームは使用しない
     name = models.CharField(max_length=255, unique=True, verbose_name="名前")
     email = models.EmailField(max_length=255, unique=True, verbose_name="メールアドレス")
+    gender = models.CharField(max_length=20, blank=True, null=True, verbose_name="性別")
     is_admin = models.BooleanField(default=False, verbose_name="管理者フラグ")
     is_staff = models.BooleanField(default=False, verbose_name="スタッフフラグ")  # 🔥 追加
     bio = models.TextField(
@@ -109,19 +111,29 @@ class CustomUser(AbstractUser, PermissionsMixin):
         verbose_name = "カスタムユーザー"
         verbose_name_plural = "カスタムユーザー一覧"
 
+    def __str__(self):
+        return self.email
+
 # 一般ユーザーのプロフィールモデル
 class UserProfile(models.Model):
     """一般ユーザーのプロフィールモデル"""
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    GENDER_CHOICES = [
+        ('male', '男性'),
+        ('female', '女性'),
+        ('other', 'その他'),
+    ]
 
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE,  # ✅ ユーザーが削除されたら、このレコードも削除
-        related_name='user_profile'
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,  # ✅ ユーザー削除時にプロフィールも削除
+        related_name="profile"
     )
-    name = models.CharField(max_length=100, blank=True, null=True)
-    bio = models.TextField(blank=True)
+    name = models.CharField(max_length=100, verbose_name="名前")
+    furigana = models.CharField(max_length=100, verbose_name="ふりがな")
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, verbose_name="性別", blank=True)
+    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
+    bio = models.TextField(blank=True, verbose_name="自己紹介")
+    age = models.PositiveIntegerField(null=True, blank=True, verbose_name="年齢")
     deleted_at = models.DateTimeField(blank=True, null=True)
 
     likes = likes = models.ManyToManyField(
@@ -144,7 +156,21 @@ class UserProfile(models.Model):
         return self.deleted_at is not None
     
     def __str__(self):
-        return self.user.email if self.user else "未設定ユーザー"
+        return f"{self.user.username} のプロフィール"
+    
+def validate_email(email):
+    """メールアドレスのバリデーション"""
+    if len(email) > 255:
+        raise ValidationError("メールアドレスは255文字以内で入力してください。")
+    return email
+
+def validate_password(password):
+    """パスワードのバリデーション"""
+    if len(password) < 8 or len(password) > 32:
+        raise ValidationError("パスワードは8~32文字で設定してください。")
+    if not re.match(r'^[a-zA-Z0-9_-]+$', password):
+        raise ValidationError("パスワードは半角英数字と'_'、'-'のみ使用可能です。")
+    return password
 
 # いいね機能のモデル
 class Like(TimestampedModel):
@@ -182,3 +208,28 @@ class GeneralUserProfile(models.Model):
 
     def __str__(self):
         return self.user.email if self.user else "未設定ユーザー"
+
+class UserProfile(models.Model):
+    """一般ユーザーのプロフィールモデル"""
+    GENDER_CHOICES = [
+        ('male', '男性'),
+        ('female', '女性'),
+    ]
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile"
+    )
+    name = models.CharField(max_length=255, verbose_name="名前")
+    furigana = models.CharField(max_length=255, verbose_name="ふりがな", default='ふりがな')
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, verbose_name="性別", blank=True)
+    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
+    bio = models.TextField(blank=True, verbose_name="自己紹介")
+    age = models.PositiveIntegerField(null=True, blank=True, verbose_name="年齢")
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="作成日")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新日")
+
+    def __str__(self):
+        return f"{self.user.username} のプロフィール"

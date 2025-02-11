@@ -1,32 +1,35 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const generalRadio = document.getElementById('generalRadio');
-    const adminRadio = document.getElementById('adminRadio');
-    const generalFields = document.getElementById('generalFields');
-    const adminFields = document.getElementById('adminFields');
+document.addEventListener("DOMContentLoaded", function () {
+    const restoreButtons = document.querySelectorAll(".restore-btn");
 
-    // フィールドの有効/無効を切り替える関数
-    function toggleFields() {
-        if (generalRadio.checked) {
-            generalFields.style.display = 'block';
-            adminFields.style.display = 'none';
+    restoreButtons.forEach(button => {
+        button.addEventListener("click", function () {
+            const userId = this.getAttribute("data-id");
+            if (!userId) {
+                console.error("User ID not found!");
+                return;
+            }
 
-            // 無効化/有効化
-            generalFields.querySelectorAll('input, select, textarea').forEach(field => field.disabled = false);
-            adminFields.querySelectorAll('input, select, textarea').forEach(field => field.disabled = true);
-        } else if (adminRadio.checked) {
-            generalFields.style.display = 'none';
-            adminFields.style.display = 'block';
-
-            // 無効化/有効化
-            generalFields.querySelectorAll('input, select, textarea').forEach(field => field.disabled = true);
-            adminFields.querySelectorAll('input, select, textarea').forEach(field => field.disabled = false);
-        }
-    }
-
-    // 初期化（ページロード時に適用）
-    toggleFields();
-
-    // ラジオボタンの変更イベントでフォームを切り替える
-    generalRadio.addEventListener('change', toggleFields);
-    adminRadio.addEventListener('change', toggleFields);
+            fetch(`/accounts/account_restore/${userId}/`, {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value,
+                    "Content-Type": "application/json",
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert("復元に失敗しました: " + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error("Fetch error:", error);
+                    alert("復元処理中にエラーが発生しました。");
+                });
+        });
+    });
 });
+

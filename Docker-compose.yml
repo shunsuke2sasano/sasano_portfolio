@@ -1,28 +1,30 @@
+version: '3.8'
+
 services:
   db:
     image: mysql:8.0
-    container_name: db  # コンテナ名を固定
+    container_name: db
     environment:
-      MYSQL_ROOT_PASSWORD: Bullshit03Sasano19
-      MYSQL_DATABASE: portfolio_db
+      MYSQL_ROOT_PASSWORD: "Bullshit03Sasano19"
+      MYSQL_DATABASE: "portfolio_db"
     ports:
       - "3307:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
       - portfolio_network
-    healthcheck:  # ✅ MySQL の起動完了を待つ設定
+    healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
-      timeout: 5s
-      retries: 3
+      retries: 5
+      start_period: 30s
 
   web:
     build: .
-    container_name: portfolio_web  # コンテナ名を固定
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes: 
-      - .:/app 
+    container_name: portfolio_web
+    command: ["./entrypoint.sh"]
+    volumes:
+      - .:/app
     working_dir: /app
     ports:
       - "8000:8000"
@@ -34,7 +36,7 @@ services:
       DB_PORT: "3306"
       DB_NAME: portfolio_db
       DB_USER: root
-      DB_PASSWORD: Bullshit03Sasano19
+      DB_PASSWORD: 'Bullshit03Sasano19'
     networks:
       - portfolio_network
 
@@ -43,4 +45,3 @@ volumes:
 
 networks:
   portfolio_network:
-

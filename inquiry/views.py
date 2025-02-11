@@ -1,34 +1,44 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Inquiry, Category
-from .forms import InquiryForm, CategoryForm, InquiryCreateForm
+from .forms import InquiryForm, CategoryForm, InquiryCreateForm, InquiryStatusUpdateForm
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth.decorators import user_passes_test
+
+def is_admin(user):
+    return user.is_authenticated and user.is_superuser
 
 # お問い合わせ一覧
+@user_passes_test(is_admin)
 def inquiry_list(request):
     inquiries = Inquiry.objects.all()
     return render(request, 'inquiry/inquiry_list.html', {'inquiries': inquiries})
 
 # お問い合わせ詳細
+@user_passes_test(is_admin)
 def inquiry_detail(request, id):
     inquiry = get_object_or_404(Inquiry, id=id)
+
     if request.method == 'POST':
-        form = InquiryForm(request.POST, instance=inquiry)
+        form = InquiryStatusUpdateForm(request.POST, instance=inquiry)
         if form.is_valid():
             form.save()
             messages.success(request, "ステータスが更新されました。")
-            return redirect('inquiry:inquiry_detail', id=id)
+            return redirect('inquiry:inquiry_detail', id=id)  # 更新後に同じページへリダイレクト
     else:
-        form = InquiryForm(instance=inquiry)
+        form = InquiryStatusUpdateForm(instance=inquiry)
+
     return render(request, 'inquiry/inquiry_detail.html', {'inquiry': inquiry, 'form': form})
 
 # カテゴリ一覧
+@user_passes_test(is_admin)
 def category_list(request):
     categories = Category.objects.filter(is_deleted=False)
     return render(request, 'inquiry/category_list.html', {'categories': categories})
 
 # カテゴリ追加
+@user_passes_test(is_admin)
 def category_add(request):
     if request.method == 'POST':
         form = CategoryForm(request.POST)
@@ -43,6 +53,7 @@ def category_add(request):
     return render(request, 'inquiry/category_add.html', {'form': form})
 
 # カテゴリ編集
+@user_passes_test(is_admin)
 def category_edit(request, id):
     category = get_object_or_404(Category, id=id)
     if request.method == 'POST':
@@ -58,6 +69,7 @@ def category_edit(request, id):
     return render(request, 'inquiry/category_edit.html', {'form': form})
 
 # カテゴリ削除
+@user_passes_test(is_admin)
 def category_delete(request, id):
     category = get_object_or_404(Category, id=id, is_deleted=False)
     if request.method == 'POST':

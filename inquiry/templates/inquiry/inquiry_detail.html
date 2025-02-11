@@ -9,6 +9,14 @@
     <p><strong>カテゴリー:</strong> {{ inquiry.category.name }}</p>
     <p><strong>本文:</strong> {{ inquiry.body|linebreaks }}</p>
     <p><strong>ステータス:</strong> {{ inquiry.get_status_display }}</p>
-    <a href="{% url 'inquiry:inquiry_list' %}" class="btn btn-secondary">一覧に戻る</a>
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+        <label for="{{ form.status.id_for_label }}">ステータスを変更:</label>
+        {{ form.status }}
+        <button type="submit" class="btn btn-primary">更新</button>
+    </form>
+
+    <a href="{% url 'inquiry:list' %}" class="btn btn-secondary mt-3">一覧に戻る</a>
 </div>
 {% endblock %}
+

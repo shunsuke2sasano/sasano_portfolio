@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth import get_user_model
 import re
+from inquiry.models import Inquiry, Category
 
 User = get_user_model()  # カスタムユーザーモデルを取得
 
@@ -107,3 +108,49 @@ class UserSettingsForm(forms.ModelForm):
     class Meta:
         model = User  # カスタムユーザーモデルを使用
         fields = ['email']
+
+class InquiryCreateForm(forms.ModelForm):
+    class Meta:
+        model = Inquiry
+        fields = ['category', 'body']
+
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.filter(is_deleted=False),
+        required=False,  # Django側のバリデーション
+        widget=forms.Select(attrs={'class': 'form-control', 'required': False, 'style': 'width: 100%; height: 50px; font-size: 18px;'})  # HTML5のバリデーションを無効化
+    )
+
+    body = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'required': False, 'style': 'width: 100%; height: 200px; font-size: 18px;'}),  # HTML5バリデーションを無効化
+        required=False
+    )
+
+    class Meta:
+        model = Inquiry
+        fields = ['category', 'body']
+
+    def clean_category(self):
+        category = self.cleaned_data.get('category')
+        if not category:
+            raise forms.ValidationError("カテゴリを選択してください。")  # 独自エラーメッセージ
+        return category
+    
+    def clean_body(self):
+        body = self.cleaned_data.get('body')
+        if not body:
+            raise forms.ValidationError('お問合せ内容を入力してください。') #独自エラーメッセージ
+        return body
+    
+class UserForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput())
+
+    class Meta:
+        model = User
+        fields = ['email', 'first_name', 'last_name', 'gender', 'bio', 'profile_image']  
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password"])  # Hash the password
+        if commit:
+            user.save()
+        return user

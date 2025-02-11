@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
 from accounts.models import Like, CustomUser
 from accounts.views import monthly_like_ranking, yearly_like_ranking
+from django.http import JsonResponse
 
 @login_required
 def admin_dashboard(request):

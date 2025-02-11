@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ユーザー設定{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>ユーザー設定</h2>
+
+    <form method="post" novalidate id="settings-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+            {% if form.email.errors %}
+                <div class="text-danger error-field">
+                    {{ form.email.errors }}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            {{ form.new_password.label_tag }}
+            {{ form.new_password }}
+            {% if form.new_password.errors %}
+                <div class="text-danger error-field">
+                    {{ form.new_password.errors }}
+                </div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="submit-button">変更を保存</button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let submitButton = document.getElementById("submit-button");
+        let errorFields = document.querySelectorAll(".error-field");
+    
+        if (submitButton) {
+            submitButton.addEventListener("click", function (event) {
+                // ✅ 各フォームフィールドのエラーメッセージを削除
+                errorFields.forEach(function (element) {
+                    element.style.display = "none";
+                });
+            });
+        }
+    
+        // ✅ Django の `success` を JavaScript で正しく処理
+        let success = JSON.parse("{{ success|yesno:'true,false'|lower|safe }}");
+    
+        if (success === true) {
+            alert("情報更新が成功しました");
+            window.location.href = "{% url 'accounts:user_settings' %}";  // ✅ OK を押したらリダイレクト
+        }
+    });
+    </script>
+    
+
+{% endblock %}
+

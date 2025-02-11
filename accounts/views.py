@@ -1,15 +1,16 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, update_session_auth_hash
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Q
 from django.utils.timezone import now
 from django.http import JsonResponse
 from django.urls import reverse
-from .models import CustomUser, GeneralUserProfile, Like
-from .forms import LoginForm, AdminSettingsForm, AccountForm, AccountEditForm
+from .models import CustomUser, GeneralUserProfile, Like, UserProfile
+from .forms import LoginForm, AdminSettingsForm, AccountForm, AccountEditForm, UserSettingsForm, EditProfileForm
 from django.core.paginator import Paginator
+from django.views.decorators.csrf import csrf_exempt
 
 import logging
 
@@ -38,10 +39,10 @@ def login_view(request):
 
                 login(request, user)
 
-                if next_url:
-                    return redirect(next_url)
-
-                return redirect('dashboard:admin_dashboard' if user.is_staff else 'accounts:account_list')
+                if user.is_staff or user.is_superuser:
+                    return redirect('dashboard:admin_dashboard')
+                else:
+                    return redirect('dashboard:user_dashboard')
 
             else:
                 messages.error(request, "ログインに失敗しました。")
@@ -98,29 +99,17 @@ def account_list(request):
 
     return render(request, "accounts/account_list.html", {"page_obj": page_obj})
 
-# **一般アカウント一覧**
-@login_required
-def general_account_list(request):
-    profiles = GeneralUserProfile.objects.all()
-    return render(request, 'accounts/general_account_list.html', {'profiles': profiles})
-
-# **アカウント詳細**
-def general_account_detail(request, id):
-    """一般ユーザーのアカウント詳細を表示"""
-    profile = get_object_or_404(GeneralUserProfile, user_id= id)
-    return render(request, 'accounts/general_account_detail.html', {'profile': profile})
-
 # **アカウント削除（論理削除）**
 @login_required
-def account_delete(request, id):
+def account_delete(request, user_id):
     """ アカウントの論理削除（Ajax対応） """
     if request.method == "POST":
         try:
-            user = get_object_or_404(CustomUser, id=id)
+            user = get_object_or_404(CustomUser, id=user_id)
             user.is_deleted = True  # 論理削除フラグを設定
             user.is_active = False  # 無効化
             user.save()
-            return JsonResponse({"success": True, "message": "アカウントを削除しました。", "user_id": id})
+            return JsonResponse({"success": True, "message": "アカウントを削除しました。", "user_id": user.id})
         except CustomUser.DoesNotExist:
             return JsonResponse({"success": False, "message": "アカウントが見つかりません。"}, status=404)
     return JsonResponse({"success": False, "message": "無効なリクエストです。"}, status=400)
@@ -136,35 +125,32 @@ def account_delete_list(request):
 # **完全削除**
 @login_required
 @user_passes_test(is_admin)
-def account_delete_permanently(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)
+def account_delete_permanently(request, account_id):
+    if request.method == "POST":
+        user = get_object_or_404(CustomUser, id=account_id)
+        
+        if user:
+            user.delete()  # 二重取得を削除
+            return JsonResponse({"success": True, "message": f"{user.name} を完全に削除しました。"})
+        else:
+            return JsonResponse({"success": False, "message": "アカウントが見つかりませんでした。"})
 
-    if request.method == 'POST':
-        try:
-            with transaction.atomic():
-                GeneralUserProfile.objects.filter(user=user).delete()
-                Like.objects.filter(user=user).delete()
-                Like.objects.filter(liked_user=user).delete()
-
-                user.delete()
-                return JsonResponse({'success': True, 'message': f"アカウント {user.email} を完全に削除しました。"})
-        except Exception as e:
-            return JsonResponse({'success': False, 'message': f"削除に失敗しました: {str(e)}"})
-
-    return JsonResponse({'success': False, 'message': "不正なリクエストです。"}, status=400)
-
-
+    return JsonResponse({"success": False, "message": "不正なリクエストです。"}, status=400)
+       
 # **アカウント復元**
 @login_required
 @user_passes_test(is_admin)
 def account_restore(request, id):
-    user = get_object_or_404(CustomUser, id=id)
     if request.method == 'POST':
-        user.is_deleted = False
-        user.save()
-        messages.success(request, "アカウントを復元しました。")
-    return redirect('accounts:account_delete_list')
-
+        try:
+            user = get_object_or_404(CustomUser, id=id)
+            user.is_active = True
+            user.is_deleted = False
+            user.save()
+            return JsonResponse({'success': True, 'message': f"{user.name} を復元しました。"})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)}, status=500)
+    return JsonResponse({'success': False, 'message': '無効なリクエストです。'}, status=405)
 
 # **アカウント作成**
 @login_required
@@ -217,19 +203,19 @@ def account_edit(request, id):
 # **ステータス切り替え**
 @login_required
 @user_passes_test(is_admin)
-def toggle_status(request, id):
-    """ステータス切り替え処理"""
+@user_passes_test(lambda u: u.is_staff) 
+def toggle_status(request, user_id):  # 修正: `id` → `user_id`
     if request.method == "POST":
-        user = get_object_or_404(CustomUser, id=id)
-        user.is_active = not user.is_active
-        user.save()
-        return JsonResponse({
-            "success": True,
-            "is_active": user.is_active,
-            "message": f"ユーザー {user.name} のステータスを {'有効' if user.is_active else '無効'} に変更しました。"
-        })
-    return JsonResponse({"success": False, "message": "無効なリクエスト"}, status=400)
+        try:
+            user = get_object_or_404(CustomUser, id=user_id)
+            user.is_active = not user.is_active
+            user.save()
+            return JsonResponse({"success": True, "message": "ステータスを変更しました。"})
+        except Exception as e:
+            return JsonResponse({"success": False, "message": str(e)}, status=500)
 
+    return JsonResponse({"success": False, "message": "無効なリクエストです。"}, status=400)
+    
 @login_required
 def like_toggle(request, id):
     """いいねのトグル"""
@@ -272,3 +258,62 @@ def yearly_like_ranking(request):
     ).values('liked_user__id', 'liked_user__name').annotate(like_count=Count('id')).order_by('-like_count')
 
     return render(request, 'accounts/yearly_like_ranking.html', {'ranking': ranking})
+
+@login_required
+def user_settings_view(request):
+    user = request.user
+
+    if request.method == 'POST':
+        form = UserSettingsForm(request.POST, instance=user)
+        if form.is_valid():
+            user = form.save(commit=False)
+
+            if form.cleaned_data.get('new_password'):
+                user.set_password(form.cleaned_data['new_password'])  # パスワードを変更
+            user.save()
+
+            messages.success(request, "設定が更新されました。")
+            return redirect('accounts:user_settings')  # 更新後に同じページへ
+
+    else:
+        form = UserSettingsForm(instance=user)
+
+    return render(request, 'accounts/user_settings.html', {'form': form})
+
+@login_required
+def user_settings_view(request):
+    user = request.user
+    success = False  # ✅ 初期値を False に設定
+
+    if request.method == 'POST':
+        form = UserSettingsForm(request.POST, instance=user)
+        if form.is_valid():
+            user = form.save(commit=False)
+
+            if form.cleaned_data.get('new_password'):
+                user.set_password(form.cleaned_data['new_password'])
+                update_session_auth_hash(request, user)  # ✅ セッションを維持
+
+            user.save()
+            success = True  # ✅ 成功フラグをセット
+
+    else:
+        form = UserSettingsForm(instance=user)
+
+    return render(request, 'accounts/user_settings.html', {'form': form, 'success': success})
+
+@login_required
+def edit_profile(request):
+    """一般ユーザーのプロフィール編集"""
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+
+    if request.method == "POST":
+        form = EditProfileForm(request.POST, request.FILES, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('accounts:edit_profile')  # ✅ 更新後に同じページへリダイレクト
+
+    else:
+        form = EditProfileForm(instance=profile)
+
+    return render(request, "accounts/edit_profile.html", {"form": form})

@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            if (!confirm("本当にこのアカウントを削除しますか？")) {
+            if (!confirm("本当にこのアカウントを完全に削除しますか？")) {
                 return;
             }
 

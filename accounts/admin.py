@@ -6,7 +6,7 @@ except ImportError:
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'name', 'created_at', 'updated_at', 'deleted_at')  # 新しいフィールドを追加
+    list_display = ('user', 'name', 'created_at', 'updated_at')  # 新しいフィールドを追加
     search_fields = ('user__username', 'name') 
 
 # Register your models here.

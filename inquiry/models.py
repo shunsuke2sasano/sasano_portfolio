@@ -1,4 +1,6 @@
 from django.db import models
+from django import forms
+
 
 class TimestampedModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -36,6 +38,9 @@ class Inquiry(models.Model):
     def __str__(self):
         return f"{self.category.name}: {self.body[:20]}..."  # contentをbodyに修正
 
-
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['name']
 
 

@@ -19,14 +19,12 @@ urlpatterns = [
     path('account_create/', views.account_create, name='account_create'),  # アカウント作成
     path('account_edit/<int:id>/', views.account_edit, name='account_edit'),
     path('account_delete_list/', views.account_delete_list, name='account_delete_list'),  # 削除済みアカウント一覧
-    path('account_delete/<int:id>/', views.account_delete, name='account_delete'),  # ソフトデリート
+    path('account_delete/<int:user_id>/', views.account_delete, name='account_delete'),  # ソフトデリート
     path('account_restore/<int:id>/', views.account_restore, name='account_restore'),  # アカウント復旧
-    path('account_delete_permanently/<int:user_id>/', views.account_delete_permanently, name='account_delete_permanently'),# 完全削除
-    path('toggle_status/<int:id>/', views.toggle_status, name='toggle_status'), # ステータス切り替え
-
-    # 一般ユーザー関連
-    path('general_accounts/', views.general_account_list, name='general_account_list'), #一般
-    path('general_accounts/<int:user_id>/', views.general_account_detail, name='general_account_detail'), #アカウント詳細
+    path('account_delete_permanently/<int:account_id>/', views.account_delete_permanently, name='account_delete_permanently'),# 完全削除
+    path('toggle_status/<int:user_id>/', views.toggle_status, name='toggle_status'), # ステータス切り替え
+    path('user/settings/', views.user_settings_view, name='user_settings'), #一般ユーザー設定変更
+    path("user/edit_profile/", views.edit_profile, name="edit_profile"),#一般プロフィール編集
    
    # いいね機能
     path('like_toggle/<int:id>/', views.like_toggle, name='like_toggle'),# いいね機能

@@ -31,6 +31,17 @@ class Profile(TimestampedModel):
     class Meta:
         app_label = 'users'
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=(('male', '男性'), ('female', '女性')),)
+    bio = models.TextField(blank=True)
+    likes_count = models.IntegerField(default=0)
 
+    def __str__(self):
+        return self.user.username
+
+    def get_gender_display(self):
+        return dict(self.GENDER_CHOICES).get(self.gender, "未設定")
     
 

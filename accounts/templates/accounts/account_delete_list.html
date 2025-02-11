@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %} 
 
 {% block title %}アカウント削除一覧{% endblock %}
 
@@ -12,11 +13,11 @@
                 <th>メールアドレス</th>
                 <th>ステータス</th>
                 <th>操作</th>
-            </tr>
+            </tr >
         </thead>
         <tbody>
             {% for account in accounts %}
-            <tr>
+            <tr id="user-row-{{ account.id }}">
                 <td>{{ account.name }}</td>
                 <td>{{ account.email }}</td>
                 <td>
@@ -28,17 +29,18 @@
                 </td>
                 <td>
                     <!-- 完全削除ボタン -->
-                    <form method="post" action="{% url 'accounts:account_delete_permanently' account.id %}" style="display:inline;">
+                    <form method="post" class="delete-permanently-form" data-id="{{ account.id }}" style="display:inline;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('本当に削除しますか？');">
+                        <button type="button" class="btn btn-danger btn-sm delete-permanently-btn" data-id="{{ account.id }}">
                             完全に削除
                         </button>
                     </form>
-
                     <!-- 復元ボタン -->
-                    <form method="post" action="{% url 'accounts:account_restore' account.id %}" style="display:inline;">
+                    <form method="post" class="restore-form" data-id="{{ account.id }}" style="display:inline;">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-success btn-sm">復元</button>
+                        <button type="button" class="btn btn-success btn-sm restore-btn" data-id="{{ account.id }}">
+                            復元
+                        </button>
                     </form>
                 </td>
             </tr>
@@ -49,4 +51,13 @@
         <a href="{% url 'accounts:account_list' %}" class="btn btn-primary">アカウント一覧に戻る</a>
     </div>
 </div>
+
+<!-- CSRFトークンをメタタグに埋め込む -->
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<!-- JSファイルの正しい参照 -->
+<script src="{% static 'accounts/delete_permanently.js' %}" defer></script>
+<script src="{% static 'accounts/restore_account.js' %}" defer></script>
+
 {% endblock %}
+
