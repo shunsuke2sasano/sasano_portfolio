@@ -10,16 +10,18 @@
         <li>
             {% if profile.profile_image %}
                 <img src="{{ profile.profile_image.url }}" alt="Profile Image" width="100">
+            {% elif profile.user.profile_image and profile.user.profile_image.name != "profile_images/default_profile_image.jpg" %}
+                <img src="{{ profile.user.profile_image.url }}" alt="Profile Image" width="100">
             {% else %}
-                <img src="/media/profile_images/default.jpg" alt="Profile Image" width="100">
+                <img src="/media/profile_images/default_profile_image.png" alt="Profile Image" width="100">
             {% endif %}
             
             <strong>
-                <a href="{% url 'users:general_account_detail' user_id=profile.id %}">
-                    {{ profile.user.username|default:"未設定" }}
+                <a href="{% url 'users:general_account_detail' user_id=profile.user.id %}">
+                    {{ profile.name|default:profile.user.name|default:"未設定" }}
                 </a>
-            </strong> - {{ profile.get_gender_display|default:"Not Specified" }}
-            <button class="like-btn" data-user-id="{{ profile.id }}">
+            </strong> - {{ profile.get_gender_display|default:"未設定"}}
+            <button class="like-btn" data-user-id="{{ profile.user.id }}">
                 👍 {{ profile.likes_count }}
             </button>
         </li>
@@ -57,4 +59,5 @@
     });
 </script>
 {% endblock %}
+
 

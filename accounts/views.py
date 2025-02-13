@@ -99,6 +99,12 @@ def account_list(request):
 
     return render(request, "accounts/account_list.html", {"page_obj": page_obj})
 
+# **アカウント詳細**
+def general_account_detail(request, id):
+    """一般ユーザーのアカウント詳細を表示"""
+    profile = get_object_or_404(GeneralUserProfile, user_id= id)
+    return render(request, 'accounts/general_account_detail.html', {'profile': profile})
+
 # **アカウント削除（論理削除）**
 @login_required
 def account_delete(request, user_id):
@@ -109,6 +115,13 @@ def account_delete(request, user_id):
             user.is_deleted = True  # 論理削除フラグを設定
             user.is_active = False  # 無効化
             user.save()
+
+            user_profile = get_object_or_404(UserProfile, user=user)
+            user_profile.delete()
+
+            general_user_profile = get_object_or_404(GeneralUserProfile, user=user)
+            general_user_profile.delete()
+
             return JsonResponse({"success": True, "message": "アカウントを削除しました。", "user_id": user.id})
         except CustomUser.DoesNotExist:
             return JsonResponse({"success": False, "message": "アカウントが見つかりません。"}, status=404)
@@ -167,8 +180,22 @@ def account_create(request):
                 user.is_superuser = True
             user.set_password(form.cleaned_data.get('password'))
             user.save()
-            GeneralUserProfile.objects.create(user=user, likes_count=0)
-            messages.success(request, "アカウントが作成されました。")
+
+            # GeneralUserProfileを作成
+            try:
+                profile = GeneralUserProfile.objects.create(user=user,
+                            likes_count=0,
+                            name=form.cleaned_data.get('name'),
+                            furigana=form.cleaned_data.get('furigana'),
+                            age=form.cleaned_data.get('age'),
+                            bio=form.cleaned_data.get('bio'),)
+                
+                messages.success(request, "アカウントが作成されました。")
+                print(f"GeneralUserProfile created for {profile.user.email}")  # デバッグ用
+            except Exception as e:
+                messages.error(request, f"プロフィール作成時にエラーが発生しました: {e}")
+                print(f"Error while creating profile: {e}")  # デバッグ用
+            
             return redirect('accounts:account_list')
 
     else:
@@ -216,34 +243,52 @@ def toggle_status(request, user_id):  # 修正: `id` → `user_id`
 
     return JsonResponse({"success": False, "message": "無効なリクエストです。"}, status=400)
     
-@login_required
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+
 def like_toggle(request, id):
-    """いいねのトグル"""
-    if request.method == 'POST':
-        profile = get_object_or_404(GeneralUserProfile, id=id)
+    """対象アカウントに対するいいねのトグル処理"""
+    profile = get_object_or_404(GeneralUserProfile, id=id)
+    target_user = profile.user  # いいねされる側
+    current_user = request.user  # いいねする側
 
-        if request.session.get(f'liked_{id}', False):
-            profile.likes_count -= 1
-            request.session[f'liked_{id}'] = False
-        else:
-            profile.likes_count += 1
-            request.session[f'liked_{id}'] = True
+    # Like オブジェクトが存在するかチェック
+    like_obj = Like.objects.filter(user=current_user, liked_user=target_user).first()
+    if like_obj:
+        # 既にいいねしている場合は Like を削除
+        like_obj.delete()
+        liked = False
+    else:
+        # いいねしていなければ Like を作成
+        Like.objects.create(user=current_user, liked_user=target_user)
+        liked = True
 
-        profile.save()
-        return JsonResponse({'success': True, 'likes': profile.likes_count})
+    # 対象ユーザーへの総いいね数を再計算
+    new_count = Like.objects.filter(liked_user=target_user).count()
+    profile.likes_count = new_count
+    profile.save()
 
-    return JsonResponse({'success': False, 'error': '無効なリクエスト'}, status=400)
+    return JsonResponse({
+        'success': True,
+        'liked': liked,
+        'likes': new_count
+    })
 
 
 # **月間いいねランキング**
-@login_required
 def monthly_like_ranking(request):
     """月間のいいねランキングを取得"""
     current_year = now().year
     current_month = now().month
 
     profiles = GeneralUserProfile.objects.annotate(
-        total_likes=Count("user__likes_received", filter=Q(user__likes_received__created_at__year=current_year, user__likes_received__created_at__month=current_month))
+        total_likes=Count(
+            "user__likes_received_records",
+            filter=Q(
+                user__likes_received_records__created_at__year=current_year,
+                user__likes_received_records__created_at__month=current_month
+            )
+        )
     ).order_by("-total_likes")
 
     return render(request, 'accounts/monthly_like_ranking.html', {'profiles': profiles})
@@ -305,15 +350,12 @@ def user_settings_view(request):
 @login_required
 def edit_profile(request):
     """一般ユーザーのプロフィール編集"""
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
-
+    profile, created = GeneralUserProfile.objects.get_or_create(user=request.user)
     if request.method == "POST":
         form = EditProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
-            return redirect('accounts:edit_profile')  # ✅ 更新後に同じページへリダイレクト
-
+            return redirect('accounts:edit_profile')
     else:
         form = EditProfileForm(instance=profile)
-
     return render(request, "accounts/edit_profile.html", {"form": form})

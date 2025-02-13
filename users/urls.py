@@ -10,5 +10,5 @@ urlpatterns = [
 
     # 公開ユーザー関連
     path('general_accounts/', views.general_account_list, name='general_account_list'), #公開アカウント一覧
-    path('general_accounts/<int:id>/', views.general_account_detail, name='general_account_detail'), #公開アカウント詳細
+    path('general_accounts/<int:user_id>/', views.general_account_detail, name='general_account_detail'), #公開アカウント詳細
 ]

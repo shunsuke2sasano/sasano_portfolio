@@ -8,6 +8,8 @@ from django.conf import settings
 from users.forms import InquiryCreateForm, UserForm
 from inquiry.models import Inquiry, Category
 from .models import UserProfile
+from django.shortcuts import render
+from accounts.models import CustomUser, GeneralUserProfile
 
 User = get_user_model()
 
@@ -57,6 +59,9 @@ def edit_profile(request):
 
     return render(request, 'users/edit_profile.html', {'form': form})
 
+from django.core.mail import send_mail
+from django.conf import settings
+
 def inquiry_create(request):
     categories = Category.objects.filter(is_deleted=False)
     
@@ -66,6 +71,16 @@ def inquiry_create(request):
             inquiry = form.save(commit=False)
             inquiry.status = 'pending'
             inquiry.save()
+            
+            # メール自動送信の追加
+            send_mail(
+                subject='新しいお問い合わせが届きました',
+                message='お問い合わせ内容:\n' + inquiry.body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.ADMIN_EMAIL],  # もしくは settings.NOTIFY_EMAILS
+                fail_silently=False,
+            )
+            
             messages.success(request, "お問い合わせが送信されました。")
             return redirect('users:inquiry_create')
     else:
@@ -73,38 +88,11 @@ def inquiry_create(request):
 
     return render(request, 'users/inquiry_create.html', {'form': form, 'categories': categories})
 
-# **一般アカウント一覧**
 def general_account_list(request):
-    profiles = UserProfile.objects.filter(user__is_active=True) 
+    # GeneralUserProfileを取得
+    profiles = GeneralUserProfile.objects.filter(user__is_active=True, user__is_deleted=False).select_related('user')  # アクティブなユーザーのみを表示
     return render(request, 'users/general_account_list.html', {'profiles': profiles})
 
 def general_account_detail(request, user_id):
-    profile = UserProfile.objects.get(user_id=user_id)
+    profile = get_object_or_404(GeneralUserProfile, user_id=user_id)
     return render(request, 'users/general_account_detail.html', {'profile': profile})
-
-# users/views.py
-def general_account_list(request):
-    profiles = UserProfile.objects.filter(user__is_active=True)  # 追加: アクティブなユーザーのみ
-    return render(request, 'users/general_account_list.html', {'profiles': profiles})
-
-
-from users.models import UserProfile
-
-def account_create(request):
-    if request.method == 'POST':
-        # ユーザー作成
-        user_form = UserForm(request.POST)
-        if user_form.is_valid():
-            user = user_form.save()
-
-            # UserProfile作成
-            user_profile = UserProfile(user=user)
-            user_profile.save()
-
-            # その他の処理
-            messages.success(request, "アカウントが作成されました。")
-            return redirect('users:general_account_list')
-
-    else:
-        user_form = UserForm()
-    return render(request, 'accounts/account_create.html', {'form': user_form})

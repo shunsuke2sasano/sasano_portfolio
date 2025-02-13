@@ -1,44 +1,53 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const likeButtons = document.querySelectorAll('.like-btn');
+  const likeButtons = document.querySelectorAll('.like-btn');
 
-    likeButtons.forEach(button => {
-        button.addEventListener('click', async () => {
-            const userId = button.dataset.userId; // ボタンに設定された data-user-id を取得
-            if (!userId) {
-                console.error('User ID not found on the button.');
-                return;
-            }
+  likeButtons.forEach(button => {
+    button.dataset.liked = "false";
 
-            const likeToggleUrl = `/accounts/like_toggle/${userId}/`; // DjangoビューのURL
+    button.addEventListener('click', async () => {
+      if (button.disabled) return;
+      
+      // data-profile-id を取得
+      const profileId = button.dataset.profileId;
+      if (!profileId) {
+        console.error('Profile ID not found on the button.');
+        return;
+      }
+      
+      button.disabled = true;
+      const likeToggleUrl = getLikeToggleUrl(profileId);
 
-            try {
-                // Fetch APIで非同期リクエスト
-                const response = await fetch(likeToggleUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken, // DjangoのCSRFトークン
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                const data = await response.json();
-
-                if (data.success) {
-                    // ボタンのテキストを更新
-                    button.textContent = `👍 ${data.likes}`;
-                } else {
-                    console.error('Failed to toggle like:', data.error);
-                }
-            } catch (error) {
-                console.error('Error occurred while toggling like:', error);
-            }
+      try {
+        const response = await fetch(likeToggleUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+          },
         });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        console.log('Data:', data);
+
+        if (data.success) {
+          button.dataset.liked = data.liked ? "true" : "false";
+
+          if (data.liked) {
+            button.textContent = `取消 👍 ${data.likes}`;
+          } else {
+            button.textContent = `いいね 👍 ${data.likes}`;
+          }
+        } else {
+          console.error('Failed to toggle like:', data.error);
+        }
+      } catch (error) {
+        console.error('Error occurred while toggling like:', error);
+      } finally {
+        button.disabled = false;
+      }
     });
+  });
 });
-
-
-

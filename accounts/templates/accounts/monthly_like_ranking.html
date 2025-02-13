@@ -8,10 +8,15 @@
 <ol>
     {% for profile in profiles %}
         <li>
-            <img src="{{ profile.profile_image.url|default_if_none:'/media/profile_images/default_profile_image.jpg' }}" 
-                 alt="Profile Image" width="100">
+            {% if profile.profile_image %}
+                <img src="{{ profile.profile_image.url }}" alt="Profile Image" width="100">
+            {% elif profile.user.profile_image and profile.user.profile_image.name != "profile_images/default_profile_image.jpg" %}
+                <img src="{{ profile.user.profile_image.url }}" alt="Profile Image" width="100">
+            {% else %}
+                <img src="/media/profile_images/default_profile_image.png" alt="Profile Image" width="100">
+            {% endif %}
             <strong>{{ profile.user.name }}</strong> - 👍 
-            <button class="like-btn toggle-status-btn" data-user-id="{{ profile.user.id }}">
+            <button class="like-btn toggle-status-btn" data-profile-id="{{ profile.id }}">
                 {{ profile.total_likes }}
             </button>
         </li>
@@ -20,9 +25,9 @@
 
 <!-- Like機能用のスクリプト -->
 <script>
-    const likeToggleUrl = "{% url 'accounts:like_toggle' %}";
-    const csrfToken = "{{ csrf_token }}";
+    // URLを動的に生成する関数
+    const getLikeToggleUrl = (profileId) => `/accounts/like_toggle/${profileId}/`;
+    const csrfToken = "{{ csrf_token|safe }}";
 </script>
 <script src="{% static 'accounts/like_toggle.js' %}"></script>
 {% endblock %}
-

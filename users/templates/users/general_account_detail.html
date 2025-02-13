@@ -2,24 +2,34 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}{{ profile.user.username }} のプロフィール{% endblock %}
+{% block title %}{{ profile.name|default:profile.user.name }} のプロフィール{% endblock %}
 
 {% block content %}
+    <!-- プロフィール画像の表示 -->
+    {% if profile.profile_image %}
+        <img src="{{ profile.profile_image.url }}" alt="Profile Image" width="100">
+    {% elif profile.user.profile_image and profile.user.profile_image.name != "profile_images/default_profile_image.jpg" %}
+        <img src="{{ profile.user.profile_image.url }}" alt="Profile Image" width="100">
+    {% else %}
+        <img src="/media/profile_images/default_profile_image.png" alt="Profile Image" width="100">
+    {% endif %}
 
-<img src="{{ profile.profile_image.url|default_if_none:'/media/profile_images/default_profile_image.png' }}" alt="Profile Image" width="100">
-<p>ユーザー名: {{ profile.user.username|default:"未設定" }}</p>
-<p>性別: {{ profile.get_gender_display|default:"未設定" }}</p>
-<p>自己紹介: {{ profile.bio }}</p>
-<p>いいね数: {{ profile.likes_count }}</p>
-<button class="like-btn" data-user-id="{{ profile.user.id }}">
-    👍 {{ profile.likes_count }}
-</button>
+    <!-- ユーザー情報の表示 -->
+    <p>名前: {{ profile.name|default:profile.user.name|default:"未設定" }}</p>
+    <p>ふりがな: {{ profile.furigana|default:"未設定" }}</p>
+    <p>性別: {{ profile.get_gender_display|default:"未設定" }}</p>
+    <p>年齢: {{ profile.age|default:"未設定" }}</p>
+    <p>自己紹介: {{ profile.bio|default:"未設定" }}</p>
+    <p>いいね数: {{ profile.likes_count }}</p>
+    <button class="like-btn" data-user-id="{{ profile.user.id }}">
+        👍 {{ profile.likes_count }}
+    </button>
 
-<script>
-    const likeToggleUrl = "{% url 'accounts:like_toggle' profile.user.id %}";
-    const csrfToken = "{{ csrf_token|safe }}";
-</script>
+    <script>
+        const likeToggleUrl = "{% url 'accounts:like_toggle' profile.user.id %}";
+        const csrfToken = "{{ csrf_token|safe }}";
+    </script>
 
-<script src="{% static 'accounts/like_toggle.js' %}"></script>
-
+    <script src="{% static 'accounts/like_toggle.js' %}"></script>
 {% endblock %}
+
