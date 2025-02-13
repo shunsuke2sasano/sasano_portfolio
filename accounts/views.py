@@ -57,7 +57,7 @@ def login_view(request):
 @login_required
 def custom_logout_view(request):
     logout(request)
-    return redirect('accounts:login')
+    return redirect('accounts:login_C-000')
 
 
 # **管理者設定**
