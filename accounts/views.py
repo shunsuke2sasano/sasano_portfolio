@@ -143,7 +143,7 @@ def account_delete_permanently(request, account_id):
         user = get_object_or_404(CustomUser, id=account_id)
         
         if user:
-            user.delete()  # 二重取得を削除
+            user.physical_delete() 
             return JsonResponse({"success": True, "message": f"{user.name} を完全に削除しました。"})
         else:
             return JsonResponse({"success": False, "message": "アカウントが見つかりませんでした。"})
@@ -178,29 +178,25 @@ def account_create(request):
             if account_type == 'admin':
                 user.is_staff = True
                 user.is_superuser = True
+            else:
+                user.is_staff = False
+                user.is_superuser = False
             user.set_password(form.cleaned_data.get('password'))
             user.save()
-
-            # GeneralUserProfileを作成
-            try:
-                profile = GeneralUserProfile.objects.create(user=user,
-                            likes_count=0,
-                            name=form.cleaned_data.get('name'),
-                            furigana=form.cleaned_data.get('furigana'),
-                            age=form.cleaned_data.get('age'),
-                            bio=form.cleaned_data.get('bio'),)
-                
-                messages.success(request, "アカウントが作成されました。")
-                print(f"GeneralUserProfile created for {profile.user.email}")  # デバッグ用
-            except Exception as e:
-                messages.error(request, f"プロフィール作成時にエラーが発生しました: {e}")
-                print(f"Error while creating profile: {e}")  # デバッグ用
-            
+            # 一般の場合はプロフィールも作成
+            if account_type == 'general':
+                GeneralUserProfile.objects.create(
+                    user=user,
+                    likes_count=0,
+                    name=form.cleaned_data.get('name'),
+                    furigana=form.cleaned_data.get('furigana'),
+                    age=form.cleaned_data.get('age'),
+                    bio=form.cleaned_data.get('bio'),
+                )
+            messages.success(request, "アカウントが作成されました。")
             return redirect('accounts:account_list')
-
     else:
         form = AccountForm()
-
     return render(request, 'accounts/account_create.html', {'form': form})
 
 
@@ -209,21 +205,30 @@ def account_create(request):
 @user_passes_test(is_admin)
 def account_edit(request, id):
     user = get_object_or_404(CustomUser, id=id)
-
     if request.method == 'POST':
         form = AccountEditForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
+            account_type = form.cleaned_data.get('account_type')
             user = form.save(commit=False)
+            if account_type == 'admin':
+                user.is_staff = True
+                user.is_superuser = True
+            else:
+                user.is_staff = False
+                user.is_superuser = False
             if form.cleaned_data.get('password'):
                 user.set_password(form.cleaned_data.get('password'))
             user.is_active = form.cleaned_data.get('is_active') == 'True'
             user.save()
             messages.success(request, "アカウント情報を更新しました。")
             return redirect('accounts:account_list')
-
     else:
-        form = AccountEditForm(instance=user)
-
+        initial = {}
+        if user.is_staff and user.is_superuser:
+            initial['account_type'] = 'admin'
+        else:
+            initial['account_type'] = 'general'
+        form = AccountEditForm(instance=user, initial=initial)
     return render(request, 'accounts/account_edit.html', {'form': form, 'user': user})
 
 
@@ -307,6 +312,7 @@ def yearly_like_ranking(request):
 @login_required
 def user_settings_view(request):
     user = request.user
+    success = False 
 
     if request.method == 'POST':
         form = UserSettingsForm(request.POST, instance=user)
@@ -314,38 +320,18 @@ def user_settings_view(request):
             user = form.save(commit=False)
 
             if form.cleaned_data.get('new_password'):
-                user.set_password(form.cleaned_data['new_password'])  # パスワードを変更
+                user.set_password(form.cleaned_data['new_password'])# パスワードを変更
+                update_session_auth_hash(request, user)  
             user.save()
-
+            success = True
             messages.success(request, "設定が更新されました。")
             return redirect('accounts:user_settings')  # 更新後に同じページへ
 
     else:
         form = UserSettingsForm(instance=user)
 
-    return render(request, 'accounts/user_settings.html', {'form': form})
-
-@login_required
-def user_settings_view(request):
-    user = request.user
-    success = False  # ✅ 初期値を False に設定
-
-    if request.method == 'POST':
-        form = UserSettingsForm(request.POST, instance=user)
-        if form.is_valid():
-            user = form.save(commit=False)
-
-            if form.cleaned_data.get('new_password'):
-                user.set_password(form.cleaned_data['new_password'])
-                update_session_auth_hash(request, user)  # ✅ セッションを維持
-
-            user.save()
-            success = True  # ✅ 成功フラグをセット
-
-    else:
-        form = UserSettingsForm(instance=user)
-
     return render(request, 'accounts/user_settings.html', {'form': form, 'success': success})
+
 
 @login_required
 def edit_profile(request):

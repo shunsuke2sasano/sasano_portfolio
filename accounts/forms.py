@@ -132,7 +132,7 @@ class AccountForm(forms.ModelForm):
     ]
 
     name = forms.CharField(
-        max_length=255,
+        max_length=300,
         required=True,
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         label="名前",
@@ -140,7 +140,7 @@ class AccountForm(forms.ModelForm):
     )
 
     email = forms.EmailField(
-        max_length=255,
+        max_length=300,
         required=True,
         widget=forms.EmailInput(attrs={'class': 'form-control'}),
         label="メールアドレス",
@@ -151,7 +151,7 @@ class AccountForm(forms.ModelForm):
     )
 
     password = forms.CharField(
-        max_length=32,
+        max_length=50,
         required=True,
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         label="パスワード",
@@ -166,12 +166,20 @@ class AccountForm(forms.ModelForm):
     )
 
     furigana = forms.CharField(
-        max_length=255,
+        max_length=300,
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         label="ふりがな",
         validators=[validate_hiragana],
         error_messages={'invalid': 'ふりがなはひらがなのみで入力してください。'},
+    )
+
+    gender = forms.ChoiceField(
+        choices=[('male', '男性'), ('female', '女性'), ('other', 'その他')],
+        required=False,
+        label="性別",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        error_messages={'required': '性別を選択してください。'}
     )
 
     age = forms.IntegerField(
@@ -187,7 +195,7 @@ class AccountForm(forms.ModelForm):
     )
 
     bio = forms.CharField(
-        max_length=1500,
+        max_length=2000,
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control'}),
         label="自己紹介",
@@ -210,7 +218,12 @@ class AccountForm(forms.ModelForm):
         if password and not re.match(r'^[a-zA-Z0-9_-]{8,32}$', password):
             raise ValidationError("パスワードは8~32文字の半角英数字と'_'、'-'のみ使用可能です。")
         return password
-
+    def clean_bio(self):
+        """自己紹介のバリデーション (1500文字制限)"""
+        bio = self.cleaned_data.get('bio')
+        if len(bio) > 1500:
+            raise ValidationError("自己紹介は1500文字以内で入力してください。")
+        return bio
     def clean_profile_image(self):
         """プロフィール画像バリデーション"""
         image = self.cleaned_data.get('profile_image')
@@ -228,7 +241,12 @@ class AccountForm(forms.ModelForm):
             if not cleaned_data.get('age'):
                 self.add_error('age', '年齢を入力してください。')
 
-        return cleaned_data
+    def clean_gender(self):
+        """性別のバリデーション (男性・女性のみ)"""
+        gender = self.cleaned_data.get('gender')
+        if gender not in ['male', 'female']:
+            raise ValidationError("性別は「男性」または「女性」を選択してください。")
+        return gender
 
 User = get_user_model()
 
@@ -238,6 +256,15 @@ class EditProfileForm(forms.ModelForm):
         required=True,
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         error_messages={'required': '名前を入力してください'}
+    )
+
+    furigana = forms.CharField(
+        max_length=255,
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        label="ふりがな",
+        validators=[validate_hiragana],
+        error_messages={'invalid': 'ふりがなはひらがなのみで入力してください。'},
     )
 
     email = forms.EmailField(
@@ -297,6 +324,14 @@ class UserSettingsForm(forms.ModelForm):  # ✅ `UserSettingsForm` 追加
                 raise ValidationError("パスワードは半角英数字と'_'、'-'のみ使用可能です。")
         return password
     
+    gender = forms.ChoiceField(
+        choices=[('male', '男性'), ('female', '女性'), ('other', 'その他')],
+        required=True,
+        label="性別",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        error_messages={'required': '性別を選択してください。'}
+    )
+    
     class Meta:
         model = CustomUser
         fields = ['email']
@@ -308,18 +343,26 @@ class AccountEditForm(forms.ModelForm):
         required=True,
         label="ステータス",
     )
+    
 
     class Meta:
         model = CustomUser
-        fields = ['name', 'email', 'password', 'profile_image', 'bio', 'is_active']
+        fields = ['name','furigana', 'email', 'password', 'profile_image', 'bio', 'is_active']
         widgets = {
             'password': forms.PasswordInput(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'furigana': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'bio': forms.Textarea(attrs={'class': 'form-control'}),
             'profile_image': forms.FileInput(attrs={'class': 'form-control'}),
         }
-
+    def clean_gender(self):
+        """性別のバリデーション (男性・女性のみ)"""
+        gender = self.cleaned_data.get('gender')
+        if gender not in ['male', 'female']:
+            raise ValidationError("性別は「男性」または「女性」を選択してください。")
+        return gender
+    
     def clean_password(self):
         password = self.cleaned_data.get('password')
         if not password:
@@ -331,25 +374,25 @@ class AccountEditForm(forms.ModelForm):
 class AccountEditForm(forms.ModelForm):
     """管理者用アカウント編集フォーム"""
     
+    account_type = forms.ChoiceField(
+        choices=[('general', '一般'), ('admin', '管理者')],
+        widget=forms.RadioSelect,
+        label="アカウント種別",
+        required=True,
+        # 初期値を、たとえば既存ユーザーが管理者なら'admin'、そうでなければ'general'
+        initial='general'
+    )
+
     name = forms.CharField(
-        max_length=255,
+        max_length=300,
         required=True,
         label="アカウント名",
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         error_messages={'required': 'アカウント名を入力してください。'}
     )
 
-    furigana = forms.CharField(
-        max_length=255,
-        required=True,
-        label="ふりがな",
-        validators=[validate_hiragana],
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
-        error_messages={'required': 'ふりがなを入力してください。'}
-    )
-
     email = forms.EmailField(
-        max_length=255,
+        max_length=300,
         required=True,
         label="メールアドレス",
         widget=forms.EmailInput(attrs={'class': 'form-control'}),
@@ -360,25 +403,29 @@ class AccountEditForm(forms.ModelForm):
     )
 
     password = forms.CharField(
-        max_length=32,
+        max_length=50,
         required=False,
         label="パスワード",
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         help_text="8~32文字の半角英数字と'_'、'-'のみ使用可能"
     )
 
-    profile_image = forms.ImageField(
-        required=False,
-        label="プロフィール画像",
-        widget=forms.FileInput(attrs={'class': 'form-control'})
+    is_active = forms.ChoiceField(
+        choices=[('True', "有効"), ('False', "無効")],
+        required=True,
+        label="ステータス",
+        widget=forms.RadioSelect,
+        error_messages={'required': 'ステータスを選択してください。'}
     )
 
-    gender = forms.ChoiceField(
-        choices=[('male', '男性'), ('female', '女性')],
+    #一般項目
+    furigana = forms.CharField(
+        max_length=300,
         required=True,
-        label="性別",
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        error_messages={'required': '性別を選択してください。'}
+        label="ふりがな",
+        validators=[validate_hiragana],
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        error_messages={'required': 'ふりがなを入力してください。'}
     )
 
     age = forms.IntegerField(
@@ -393,28 +440,53 @@ class AccountEditForm(forms.ModelForm):
             'max_value': '年齢は999以下にしてください。'
         }
     )
+    profile_image = forms.ImageField(
+        required=False,
+        label="プロフィール画像",
+        widget=forms.FileInput(attrs={'class': 'form-control'})
+    )
+
+    gender = forms.ChoiceField(
+        choices=[('male', '男性'), ('female', '女性'), ('other', 'その他')],
+        required=True,
+        label="性別",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        error_messages={'required': '性別を選択してください。'}
+    )
+
+    
 
     bio = forms.CharField(
-        max_length=1500,
+        max_length=2000,
         required=False,
         label="自己紹介",
         widget=forms.Textarea(attrs={'class': 'form-control'}),
         help_text="1500文字以内で入力してください。"
     )
 
-    is_active = forms.ChoiceField(
-        choices=[('True', "有効"), ('False', "無効")],
-        required=True,
-        label="ステータス",
-        widget=forms.RadioSelect,
-        error_messages={'required': 'ステータスを選択してください。'}
-    )
+    
 
     class Meta:
         model = CustomUser
-        fields = ['name', 'furigana', 'email', 'password', 'profile_image', 'gender', 'age', 'bio', 'is_active']
+        fields = ['name', 'furigana','password', 'gender', 'age', 'email', 'profile_image', 'bio', 'is_active']
 
     # バリデーション
+    def clean_name(self):
+        """アカウント名のバリデーション"""
+        name = self.cleaned_data.get('name')
+        if len(name) > 255:
+            raise ValidationError("アカウント名は255文字以内で入力してください。")
+        return name
+    
+    def clean_furigana(self):
+        """ふりがなのバリデーション (255文字制限 & ひらがなのみ)"""
+        furigana = self.cleaned_data.get('furigana')
+        if len(furigana) > 255:
+            raise ValidationError("ふりがなは255文字以内で入力してください。")
+        if not re.match(r'^[ぁ-んー]+$', furigana):  # ひらがなのみ許可
+            raise ValidationError("ふりがなはひらがなのみ入力してください。")
+        return furigana
+
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if len(email) > 255:
@@ -426,16 +498,67 @@ class AccountEditForm(forms.ModelForm):
         if password and (len(password) < 8 or len(password) > 32 or not re.match(r'^[a-zA-Z0-9_-]+$', password)):
             raise ValidationError("パスワードは8~32文字の半角英数字と'_'、'-'のみ使用可能です。")
         return password
+        
 
     def clean_profile_image(self):
+        """プロフィール画像バリデーション"""
         image = self.cleaned_data.get('profile_image')
         if image and image.size > 2 * 1024 * 1024:  # 2MB
             raise ValidationError("画像サイズは2MB以内にしてください。")
         return image
 
+    def clean_gender(self):
+        gender = self.cleaned_data.get('gender')
+        if gender not in ['male', 'female']:
+            raise ValidationError("性別は「男性」または「女性」を選択してください。")
+        return gender
+
+    def clean_age(self):
+        age = self.cleaned_data.get('age')
+        if age is not None and not (0 <= age <= 999):
+            raise ValidationError("年齢は0〜999の範囲で入力してください。")
+        return age
+
+    def clean_bio(self):
+        bio = self.cleaned_data.get('bio')
+        if len(bio) > 1500:
+            raise ValidationError("自己紹介は1500文字以内で入力してください。")
+        return bio
+    def clean(self):
+        cleaned_data = super().clean()
+        account_type = cleaned_data.get('account_type')
+        if account_type == 'admin':
+            # 管理者の場合、一般向け項目は不要（※保存時は無視する）
+            cleaned_data['profile_image'] = None
+            cleaned_data['furigana'] = ""
+            cleaned_data['gender'] = ""
+            cleaned_data['age'] = None
+            cleaned_data['bio'] = ""
+        else:
+            # 一般の場合は各項目を必須とする
+            if not cleaned_data.get('profile_image'):
+                self.add_error('profile_image', 'プロフィール画像を入力してください。')
+            if not cleaned_data.get('furigana'):
+                self.add_error('furigana', 'ふりがなを入力してください。')
+            if not cleaned_data.get('gender'):
+                self.add_error('gender', '性別を選択してください。')
+            if not cleaned_data.get('age'):
+                self.add_error('age', '年齢を入力してください。')
+            if not cleaned_data.get('bio'):
+                self.add_error('bio', '自己紹介を入力してください。')
+        return cleaned_data
+
 class UserSettingsForm(forms.ModelForm):
+    name = forms.CharField(
+        max_length=300,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        label="アカウント名",
+        error_messages={'required': 'アカウント名は必須です。'}
+    )
+
     email = forms.EmailField(
-        max_length=256,
+        max_length=300,
         required=True,
         widget=forms.EmailInput(attrs={'class': 'form-control'}),
         error_messages={
@@ -445,13 +568,20 @@ class UserSettingsForm(forms.ModelForm):
     )
 
     new_password = forms.CharField(
-        max_length=32,
+        max_length=50,
         required=False,  # パスワード変更しない場合もあるため
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         label="新しいパスワード",
         help_text="8~32文字の半角英数字と'_'、'-'のみ使用可能",
     )
 
+    def clean_name(self):
+        """アカウント名のバリデーション"""
+        name = self.cleaned_data.get('name')
+        if len(name) > 255:
+            raise ValidationError("アカウント名は255文字以内で入力してください。")
+        return name
+    
     def clean_email(self):
         """メールアドレスのバリデーション"""
         email = self.cleaned_data.get('email')
@@ -468,10 +598,33 @@ class UserSettingsForm(forms.ModelForm):
             if not re.match(r'^[a-zA-Z0-9_-]+$', password):
                 raise ValidationError("パスワードは半角英数字と'_'、'-'のみ使用可能です。")
         return password
+    
+    gender = forms.ChoiceField(
+        choices=[('male', '男性'), ('female', '女性'), ('other', 'その他')],
+        required=True,
+        label="性別",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        error_messages={'required': '性別を選択してください。'}
+    )
+    
+    def clean_age(self):
+        """年齢のバリデーション (0-999のみ許可)"""
+        age = self.cleaned_data.get('age')
+        if age is not None:
+            if not (0 <= age <= 999):
+                raise ValidationError("年齢は0〜999の範囲で入力してください。")
+        return age
+    
+    def clean_bio(self):
+        """自己紹介のバリデーション (1500文字制限)"""
+        bio = self.cleaned_data.get('bio')
+        if len(bio) > 1500:
+            raise ValidationError("自己紹介は1500文字以内で入力してください。")
+        return bio
 
     class Meta:
         model = CustomUser
-        fields = ['email', 'new_password']
+        fields = ['name','email', 'new_password']
 
 class EditProfileForm(forms.ModelForm):
     def clean_profile_image(self):

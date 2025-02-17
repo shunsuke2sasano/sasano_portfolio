@@ -14,12 +14,10 @@ class Category(TimestampedModel):
     name = models.CharField(max_length=255)
     is_deleted = models.BooleanField(default=False) 
 
-    def delete(self, *args, **kwargs):
-        """
-        論理削除を実現するためのオーバーライド。
-        """
-        self.is_deleted = True
-        self.save()
+    def physical_delete(self, using=None, keep_parents=False):
+        super(Category, self).delete(using=using, keep_parents=keep_parents)
+        """物理削除"""
+
         
     def __str__(self):
         return self.name

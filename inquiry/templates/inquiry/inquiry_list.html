@@ -12,6 +12,7 @@
                 <th>カテゴリー</th>
                 <th>本文（最初の10文字）</th>
                 <th>ステータス</th>
+                <th>詳細</th>
             </tr>
         </thead>
         <tbody>
@@ -19,11 +20,12 @@
             <tr>
                 <td>{{ inquiry.category.name }}</td>
                 <td>
-                    <a href="{% url 'inquiry:inquiry_detail' inquiry.id %}">
-                        {{ inquiry.body|slice:":10" }}
-                    </a>
+                    {{ inquiry.body|slice:":10" }}
                 </td>
                 <td>{{ inquiry.get_status_display }}</td>
+                <td><a href="{% url 'inquiry:inquiry_detail' inquiry.id %}" class="btn btn-primary btn-sm">
+                    詳細
+                </a></td>
             </tr>
             {% endfor %}
         </tbody>

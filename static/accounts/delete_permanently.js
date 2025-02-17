@@ -3,7 +3,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 完全削除ボタンをすべて取得
     document.querySelectorAll(".delete-permanently-btn").forEach(button => {
-        button.addEventListener("click", function () {
+        button.addEventListener("click", function (event) {
+            event.preventDefault();  // ← これを追加してフォームの通常送信をキャンセル
+
             const accountId = this.dataset.id; // ボタンの data-id 取得
             console.log(`🛑 完全削除ボタンがクリックされました！アカウントID: ${accountId}`);
 

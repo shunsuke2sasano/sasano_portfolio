@@ -5,57 +5,135 @@
 {% block content %}
 <div class="container mt-4">
     <h2>ユーザー設定</h2>
-
-    <form method="post" novalidate id="settings-form">
+    <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
+
+        <!-- アカウント種別選択（編集画面でも表示する場合） -->
+        <div class="form-group">
+            <label class="form-label">アカウント種別</label>
+            {{ form.account_type }}
+            {% for error in form.account_type.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <!-- 共通の入力項目 -->
+        <div class="form-group">
+            {{ form.name.label_tag }}
+            {{ form.name }}
+            {% for error in form.name.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            {{ form.furigana.label_tag }}
+            {{ form.furigana }}
+            {% for error in form.furigana.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
+        </div>
 
         <div class="form-group">
             {{ form.email.label_tag }}
             {{ form.email }}
-            {% if form.email.errors %}
-                <div class="text-danger error-field">
-                    {{ form.email.errors }}
-                </div>
-            {% endif %}
+            {% for error in form.email.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
         </div>
 
         <div class="form-group">
-            {{ form.new_password.label_tag }}
-            {{ form.new_password }}
-            {% if form.new_password.errors %}
-                <div class="text-danger error-field">
-                    {{ form.new_password.errors }}
-                </div>
-            {% endif %}
+            {{ form.password.label_tag }}
+            {{ form.password }}
+            {% for error in form.password.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
         </div>
 
-        <button type="submit" class="btn btn-primary" id="submit-button">変更を保存</button>
+        <!-- ステータスの入力項目 -->
+        <div class="form-group">
+            <label class="form-label">ステータス</label>
+            <div>
+                <label class="form-check-label">
+                    <input type="radio" name="status" value="active" class="form-check-input" {% if form.status.value == "active" %}checked{% endif %}>
+                    有効
+                </label>
+                <label class="form-check-label ms-3">
+                    <input type="radio" name="status" value="inactive" class="form-check-input" {% if form.status.value == "inactive" %}checked{% endif %}>
+                    無効
+                </label>
+            </div>
+            {% for error in form.status.errors %}
+                <div class="text-danger validation-error">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <!-- 一般ユーザーの入力項目 -->
+        <div class="general-fields">
+            <div class="form-group">
+                {{ form.profile_image.label_tag }}
+                {{ form.profile_image }}
+                {% for error in form.profile_image.errors %}
+                    <div class="text-danger validation-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.age.label_tag }}
+                {{ form.age }}
+                {% for error in form.age.errors %}
+                    <div class="text-danger validation-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.gender.label_tag }}
+                {{ form.gender }}
+                {% if form.gender.errors %}
+                    <div class="text-danger validation-error">{{ form.gender.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.bio.label_tag }}
+                {{ form.bio }}
+                {% for error in form.bio.errors %}
+                    <div class="text-danger validation-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <button type="submit" id="submit-button" class="btn btn-primary mt-3">更新</button>
     </form>
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // submitボタンにIDを付与しているので取得できる
         let submitButton = document.getElementById("submit-button");
-        let errorFields = document.querySelectorAll(".error-field");
+        // エラー表示のクラス名を実際に使用している "validation-error" に変更
+        let errorFields = document.querySelectorAll(".validation-error");
     
         if (submitButton) {
             submitButton.addEventListener("click", function (event) {
-                // ✅ 各フォームフィールドのエラーメッセージを削除
+                // 各フォームフィールドのエラーメッセージを非表示にする
                 errorFields.forEach(function (element) {
                     element.style.display = "none";
                 });
             });
         }
     
-        // ✅ Django の `success` を JavaScript で正しく処理
-        let success = JSON.parse("{{ success|yesno:'true,false'|lower|safe }}");
+        // Django の success を JavaScript で処理（success がコンテキストに渡されている場合）
+        let success = JSON.parse("{{ success|default:'false'|yesno:'true,false'|lower|safe }}");
     
         if (success === true) {
             alert("情報更新が成功しました");
-            window.location.href = "{% url 'accounts:user_settings' %}";  // ✅ OK を押したらリダイレクト
+            window.location.href = "{% url 'accounts:user_settings' %}";
         }
     });
-    </script>
+</script>
+{% endblock %}
+
     
 
 {% endblock %}

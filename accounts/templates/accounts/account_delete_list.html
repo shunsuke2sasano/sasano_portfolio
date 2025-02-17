@@ -29,7 +29,7 @@
                 </td>
                 <td>
                     <!-- 完全削除ボタン -->
-                    <form method="post" class="delete-permanently-form" data-id="{{ account.id }}" style="display:inline;">
+                    <form method="post" action="{% url 'accounts:account_delete_permanently' account.id %}" class="delete-permanently-form" style="display:inline;">
                         {% csrf_token %}
                         <button type="button" class="btn btn-danger btn-sm delete-permanently-btn" data-id="{{ account.id }}">
                             完全に削除

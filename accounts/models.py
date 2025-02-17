@@ -42,6 +42,7 @@ class CustomUserManager(BaseUserManager):
 class CustomUser(AbstractUser, PermissionsMixin):
     username = None  # ユーザーネームは使用しない
     name = models.CharField(max_length=255, unique=True, verbose_name="名前")
+    furigana = models.CharField(max_length=255, verbose_name="ふりがな")
     email = models.EmailField(max_length=255, unique=True, verbose_name="メールアドレス")
     gender = models.CharField(max_length=20, blank=True, null=True, verbose_name="性別")
     is_admin = models.BooleanField(default=False, verbose_name="管理者フラグ")
@@ -100,6 +101,10 @@ class CustomUser(AbstractUser, PermissionsMixin):
         """論理削除: データを物理削除せずフラグで管理"""
         self.is_deleted = True
         self.save()
+    
+    def physical_delete(self, using=None, keep_parents=False):
+        super(CustomUser, self).delete(using=using, keep_parents=keep_parents)
+        """物理削除"""
 
     def restore(self):
         """論理削除されたデータの復元"""
@@ -144,6 +149,9 @@ class UserProfile(models.Model):
         self.is_deleted = True
         self.save()
 
+    def physical_delete(self, using=None, keep_parents=False):
+        super(CustomUser, self).delete(using=using, keep_parents=keep_parents)
+    
     def restore(self):
         """論理削除されたデータを復元"""
         self.is_deleted = False
