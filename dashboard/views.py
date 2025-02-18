@@ -4,7 +4,6 @@ from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
 from accounts.models import Like, CustomUser
 from accounts.views import monthly_like_ranking, yearly_like_ranking
-from django.http import JsonResponse
 
 @login_required
 def admin_dashboard(request):
@@ -12,10 +11,10 @@ def admin_dashboard(request):
     current_year = now().year
     current_month = now().month
 
-    # 月間ランキング
-    monthly_profiles = CustomUser.objects.annotate(
+    # 月間ランキング（論理削除されていないユーザーのみ）
+    monthly_profiles = CustomUser.objects.filter(is_deleted=False).annotate(
         total_likes=Count(
-            "likes_received_records",  # 修正
+            "likes_received_records",
             filter=Q(
                 likes_received_records__created_at__year=current_year,
                 likes_received_records__created_at__month=current_month
@@ -23,10 +22,10 @@ def admin_dashboard(request):
         )
     ).order_by("-total_likes")[:10]
 
-    # 年間ランキング
-    yearly_profiles = CustomUser.objects.annotate(
+    # 年間ランキング（論理削除されていないユーザーのみ）
+    yearly_profiles = CustomUser.objects.filter(is_deleted=False).annotate(
         total_likes=Count(
-            "likes_received_records",  # 修正
+            "likes_received_records",
             filter=Q(
                 likes_received_records__created_at__year=current_year
             )

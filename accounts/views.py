@@ -192,6 +192,7 @@ def account_create(request):
                     furigana=form.cleaned_data.get('furigana'),
                     age=form.cleaned_data.get('age'),
                     bio=form.cleaned_data.get('bio'),
+                    gender=form.cleaned_data.get('gender')  
                 )
             messages.success(request, "アカウントが作成されました。")
             return redirect('accounts:account_list')
@@ -286,7 +287,9 @@ def monthly_like_ranking(request):
     current_year = now().year
     current_month = now().month
 
-    profiles = GeneralUserProfile.objects.annotate(
+    profiles = GeneralUserProfile.objects.filter(
+        user__is_deleted=False
+    ).annotate(
         total_likes=Count(
             "user__likes_received_records",
             filter=Q(

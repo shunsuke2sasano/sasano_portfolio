@@ -15,7 +15,7 @@
     {% endif %}
 
     <!-- ユーザー情報の表示 -->
-    <p>名前: {{ profile.name|default:profile.user.name|default:"未設定" }}</p>
+    <p>名前: {{ profile.profile.name|default:profile.user.name|default:"未設定" }}</p>
     <p>ふりがな: {{ profile.furigana|default:"未設定" }}</p>
     <p>性別: {{ profile.get_gender_display|default:"未設定" }}</p>
     <p>年齢: {{ profile.age|default:"未設定" }}</p>

@@ -44,7 +44,12 @@ class CustomUser(AbstractUser, PermissionsMixin):
     name = models.CharField(max_length=255, unique=True, verbose_name="名前")
     furigana = models.CharField(max_length=255, verbose_name="ふりがな")
     email = models.EmailField(max_length=255, unique=True, verbose_name="メールアドレス")
-    gender = models.CharField(max_length=20, blank=True, null=True, verbose_name="性別")
+    GENDER_CHOICES = [
+    ('male', '男性'),
+    ('female', '女性'),
+    ('other', 'その他'),
+    ]
+    gender = models.CharField(max_length=20, blank=False, null=True, verbose_name="性別")
     is_admin = models.BooleanField(default=False, verbose_name="管理者フラグ")
     is_staff = models.BooleanField(default=False, verbose_name="スタッフフラグ")  # 🔥 追加
     bio = models.TextField(
@@ -126,9 +131,10 @@ class UserProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新日")
     
     GENDER_CHOICES = [
-        ('male', '男性'),
-        ('female', '女性'),
-    ]
+    ('male', '男性'),
+    ('female', '女性'),
+    ('other', 'その他'),
+]
     
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,

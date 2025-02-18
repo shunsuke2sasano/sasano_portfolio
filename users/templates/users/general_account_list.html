@@ -20,7 +20,7 @@
                 <a href="{% url 'users:general_account_detail' user_id=profile.user.id %}">
                     {{ profile.name|default:profile.user.name|default:"未設定" }}
                 </a>
-            </strong> - {{ profile.get_gender_display|default:"未設定"}}
+            </strong> - {{ profile.get_gender_display|default:"未設定" }}
             <button class="like-btn" data-user-id="{{ profile.user.id }}">
                 👍 {{ profile.likes_count }}
             </button>
