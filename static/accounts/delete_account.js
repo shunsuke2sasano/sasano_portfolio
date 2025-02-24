@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     deleteButtons.forEach(button => {
         button.addEventListener("click", function () {
-            const accountId = this.getAttribute("data-id");  // `account.id` を取得
+            const accountId = this.getAttribute("data-id");  // account.id を取得
 
             if (!accountId) {
                 console.error("Account ID not found!");
@@ -14,14 +14,23 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
 
-            fetch(`/accounts/account_delete/${accountId}/`, {  // 修正
+            
+            fetch(`/accounts/account_delete/${accountId}/`, {
                 method: "POST",
                 headers: {
-                    "X-CSRFToken": document.querySelector("meta[name='csrf-token']").content,
+                    "X-CSRFToken": document.querySelector("meta[name='csrf-token']").getAttribute("content"),
                     "Content-Type": "application/json"
-                }
+                },
+                body: JSON.stringify({})  // 空のJSONボディを送信
             })
-            .then(response => response.json())
+            .then(response => {
+                // まずレスポンスがOKかどうかチェック
+                if (!response.ok) {
+                  // JSON以外のエラーHTMLが返ってきたかもしれない
+                  throw new Error(`Network response was not OK. status=${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     alert(data.message);
@@ -34,9 +43,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Fetch error:", error);
                 alert("削除処理中にエラーが発生しました。");
             });
-            
-                
-            
         });
     });
 });
+

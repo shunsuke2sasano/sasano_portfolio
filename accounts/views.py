@@ -107,24 +107,38 @@ def general_account_detail(request, id):
 
 # **アカウント削除（論理削除）**
 @login_required
+@login_required
 def account_delete(request, user_id):
     """ アカウントの論理削除（Ajax対応） """
     if request.method == "POST":
         try:
             user = get_object_or_404(CustomUser, id=user_id)
-            user.is_deleted = True  # 論理削除フラグを設定
-            user.is_active = False  # 無効化
+            # 論理削除フラグとis_activeをFalseに
+            user.is_deleted = True
+            user.is_active = False
             user.save()
 
-            user_profile = get_object_or_404(UserProfile, user=user)
-            user_profile.delete()
+            # プロフィールがあれば削除、なければスキップ
+            try:
+                user_profile = UserProfile.objects.get(user=user)
+                user_profile.delete()
+            except UserProfile.DoesNotExist:
+                pass  # スキップ
 
-            general_user_profile = get_object_or_404(GeneralUserProfile, user=user)
-            general_user_profile.delete()
+            try:
+                general_user_profile = GeneralUserProfile.objects.get(user=user)
+                general_user_profile.delete()
+            except GeneralUserProfile.DoesNotExist:
+                pass  # スキップ
 
-            return JsonResponse({"success": True, "message": "アカウントを削除しました。", "user_id": user.id})
+            return JsonResponse({
+                "success": True,
+                "message": "アカウントを削除しました。",
+                "user_id": user.id
+            })
         except CustomUser.DoesNotExist:
             return JsonResponse({"success": False, "message": "アカウントが見つかりません。"}, status=404)
+
     return JsonResponse({"success": False, "message": "無効なリクエストです。"}, status=400)
 
 # **削除済みアカウント一覧**
@@ -175,24 +189,17 @@ def account_create(request):
             account_type = form.cleaned_data.get('account_type')
             user = form.save(commit=False)
             user.username = form.cleaned_data.get('name')
+            
             if account_type == 'admin':
                 user.is_staff = True
                 user.is_superuser = True
             else:
                 user.is_staff = False
                 user.is_superuser = False
+            
             user.set_password(form.cleaned_data.get('password'))
-            user.save()
-            # 一般の場合はプロフィールも作成
-            if account_type == 'general':
-                GeneralUserProfile.objects.create(
-                    user=user,
-                    likes_count=0,
-                    name=form.cleaned_data.get('name'),
-                    furigana=form.cleaned_data.get('furigana'),
-                    age=form.cleaned_data.get('age'),
-                    bio=form.cleaned_data.get('bio'),
-                )
+            user.save()  # ここでシグナルが発火し、GeneralUserProfile が自動作成される
+
             messages.success(request, "アカウントが作成されました。")
             return redirect('accounts:account_list')
     else:
@@ -252,23 +259,27 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
 def like_toggle(request, id):
-    """対象アカウントに対するいいねのトグル処理"""
-    profile = get_object_or_404(GeneralUserProfile, id=id)
-    target_user = profile.user  # いいねされる側
-    current_user = request.user  # いいねする側
+    # 未ログインなら403 + JSON返却
+    if not request.user.is_authenticated:
+        login_url = reverse('accounts:login_C-000')  # ログイン画面のURL
+        return JsonResponse({
+            'success': False,
+            'redirect': login_url,
+            'message': 'ログインが必要です。'
+        }, status=403)
 
-    # Like オブジェクトが存在するかチェック
+    profile = get_object_or_404(GeneralUserProfile, id=id)
+    target_user = profile.user
+    current_user = request.user
+
     like_obj = Like.objects.filter(user=current_user, liked_user=target_user).first()
     if like_obj:
-        # 既にいいねしている場合は Like を削除
         like_obj.delete()
         liked = False
     else:
-        # いいねしていなければ Like を作成
         Like.objects.create(user=current_user, liked_user=target_user)
         liked = True
 
-    # 対象ユーザーへの総いいね数を再計算
     new_count = Like.objects.filter(liked_user=target_user).count()
     profile.likes_count = new_count
     profile.save()
@@ -279,14 +290,18 @@ def like_toggle(request, id):
         'likes': new_count
     })
 
-
 # **月間いいねランキング**
 def monthly_like_ranking(request):
     """月間のいいねランキングを取得"""
     current_year = now().year
     current_month = now().month
 
-    profiles = GeneralUserProfile.objects.annotate(
+    profiles = GeneralUserProfile.objects.filter(
+        user__is_active=True,
+        user__is_deleted=False,
+        user__is_staff=False,       # 管理者でない
+        user__is_superuser=False    # スーパーユーザーでない
+    ).annotate(
         total_likes=Count(
             "user__likes_received_records",
             filter=Q(
@@ -304,7 +319,9 @@ def yearly_like_ranking(request):
     current_year = now().year
 
     ranking = Like.objects.filter(
-        created_at__year=current_year
+        created_at__year=current_year,
+        liked_user__is_staff=False,      # 管理者でない
+        liked_user__is_superuser=False   # スーパーユーザーでない
     ).values('liked_user__id', 'liked_user__name').annotate(like_count=Count('id')).order_by('-like_count')
 
     return render(request, 'accounts/yearly_like_ranking.html', {'ranking': ranking})
@@ -312,7 +329,6 @@ def yearly_like_ranking(request):
 @login_required
 def user_settings_view(request):
     user = request.user
-    success = False 
 
     if request.method == 'POST':
         form = UserSettingsForm(request.POST, instance=user)
@@ -320,17 +336,15 @@ def user_settings_view(request):
             user = form.save(commit=False)
 
             if form.cleaned_data.get('new_password'):
-                user.set_password(form.cleaned_data['new_password'])# パスワードを変更
+                user.set_password(form.cleaned_data['new_password'])  # パスワードを変更
                 update_session_auth_hash(request, user)  
             user.save()
-            success = True
             messages.success(request, "設定が更新されました。")
-            return redirect('accounts:user_settings')  # 更新後に同じページへ
-
+            return redirect('dashboard:user_dashboard')  # 更新後に同じページへリダイレクト
     else:
         form = UserSettingsForm(instance=user)
 
-    return render(request, 'accounts/user_settings.html', {'form': form, 'success': success})
+    return render(request, 'accounts/user_settings.html', {'form': form})
 
 
 @login_required

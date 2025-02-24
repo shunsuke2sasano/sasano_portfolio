@@ -34,14 +34,6 @@
         </div>
 
         <div class="form-group">
-            {{ form.furigana.label_tag }}
-            {{ form.furigana }}
-            {% for error in form.furigana.errors %}
-                <div class="text-danger validation-error">{{ error }}</div>
-            {% endfor %}
-        </div>
-
-        <div class="form-group">
             {{ form.email.label_tag }}
             {{ form.email }}
             {% for error in form.email.errors %}
@@ -77,6 +69,14 @@
 
         <!-- 一般ユーザーの入力項目 -->
         <div class="general-fields">
+            <div class="form-group">
+                {{ form.furigana.label_tag }}
+                {{ form.furigana }}
+                {% for error in form.furigana.errors %}
+                    <div class="text-danger validation-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
             <div class="form-group">
                 {{ form.profile_image.label_tag }}
                 {{ form.profile_image }}

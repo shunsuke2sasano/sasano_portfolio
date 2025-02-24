@@ -73,11 +73,19 @@ def category_edit(request, id):
 def category_delete(request, id):
     category = get_object_or_404(Category, id=id, is_deleted=False)
     if request.method == 'POST':
+        # 「未登録」カテゴリを取得または作成（未登録カテゴリがなければ作成）
+        default_category, created = Category.objects.get_or_create(
+            name='未登録',
+            defaults={'is_deleted': False}
+        )
+        # 対象カテゴリに属するお問い合わせを、未登録カテゴリに更新
+        Inquiry.objects.filter(category=category).update(category=default_category)
+        # カテゴリ自体を物理削除
         category.delete()
-        messages.success(request, "カテゴリーが削除されました。")
-        return redirect('/inquiry/')
+        messages.success(request, "カテゴリーが削除され、お問い合わせは「未登録」に更新されました。")
+        return redirect('inquiry:category_list')
     
-    return render(request, 'inquiry/category_list.html', {'category': category})
+    return render(request, 'inquiry/category_delete.html', {'category': category})
 
 #お問合せ作成
 def inquiry_create(request):

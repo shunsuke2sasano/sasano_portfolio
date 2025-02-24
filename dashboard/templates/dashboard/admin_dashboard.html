@@ -10,7 +10,7 @@
     <ul class="list-group mb-4">
         {% for profile in monthly_profiles %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            {{ profile.name }} ({{ profile.total_likes }} いいね)
+            {{ forloop.counter }}.{{ profile.name }} ({{ profile.total_likes }} いいね)
         </li>
         {% empty %}
         <li class="list-group-item">データがありません</li>
@@ -21,7 +21,7 @@
     <ul class="list-group mb-4">
         {% for profile in yearly_profiles %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            {{ profile.name }} ({{ profile.total_likes }} いいね)
+            {{ forloop.counter }}.{{ profile.name }} ({{ profile.total_likes }} いいね)
         </li>
         {% empty %}
         <li class="list-group-item">データがありません</li>

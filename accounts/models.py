@@ -41,14 +41,14 @@ class CustomUserManager(BaseUserManager):
 # 管理者モデル
 class CustomUser(AbstractUser, PermissionsMixin):
     username = None  # ユーザーネームは使用しない
-    name = models.CharField(max_length=255, unique=True, verbose_name="名前")
-    furigana = models.CharField(max_length=255, verbose_name="ふりがな")
-    email = models.EmailField(max_length=255, unique=True, verbose_name="メールアドレス")
+    name = models.CharField(max_length=300, unique=True, verbose_name="名前")
+    furigana = models.CharField(max_length=300, verbose_name="ふりがな")
+    email = models.EmailField(max_length=300, unique=True, verbose_name="メールアドレス")
     gender = models.CharField(max_length=20, blank=True, null=True, verbose_name="性別")
     is_admin = models.BooleanField(default=False, verbose_name="管理者フラグ")
     is_staff = models.BooleanField(default=False, verbose_name="スタッフフラグ")  # 🔥 追加
     bio = models.TextField(
-        max_length=1500,
+        max_length=2000,
         blank=True,
         null=True,
         verbose_name="自己紹介"
@@ -128,6 +128,7 @@ class UserProfile(models.Model):
     GENDER_CHOICES = [
         ('male', '男性'),
         ('female', '女性'),
+        ('other', 'その他'), 
     ]
     
     user = models.OneToOneField(
@@ -135,10 +136,10 @@ class UserProfile(models.Model):
         on_delete=models.CASCADE,  # ユーザーが削除されたら、プロフィールも削除
         related_name="profile"
     )
-    name = models.CharField(max_length=255, verbose_name="名前")
-    furigana = models.CharField(max_length=255, verbose_name="ふりがな", default='ふりがな')
-    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, verbose_name="性別", blank=True)
-    profile_image = models.ImageField(upload_to="profile_images/", blank=True, null=True)
+    name = models.CharField(max_length=300, verbose_name="名前")
+    furigana = models.CharField(max_length=300, verbose_name="ふりがな", default='ふりがな')
+    gender = models.CharField(max_length=20, choices=GENDER_CHOICES, verbose_name="性別", blank=True)
+    profile_image = models.ImageField(upload_to="profile_images/",blank=True, null=True, verbose_name="プロフィール画像")
     bio = models.TextField(blank=True, verbose_name="自己紹介")
     age = models.PositiveIntegerField(null=True, blank=True, verbose_name="年齢")
     
@@ -199,7 +200,7 @@ class GeneralUserProfile(models.Model):
         settings.AUTH_USER_MODEL, 
         on_delete=models.CASCADE  # ユーザーが削除されたら、このレコードも削除
     )
-    profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
+    profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True, verbose_name="プロフィール画像")
     gender = models.CharField(
         max_length=10, 
         choices=[('male', '男性'), ('female', '女性'), ('other', 'その他')],
@@ -208,8 +209,8 @@ class GeneralUserProfile(models.Model):
     )  
     likes_count = models.PositiveIntegerField(default=0)  
 
-    name = models.CharField(max_length=255, verbose_name="名前", blank=True, null=True)
-    furigana = models.CharField(max_length=255, verbose_name="ふりがな", blank=True, null=True)
+    name = models.CharField(max_length=300, verbose_name="名前", blank=True, null=True)
+    furigana = models.CharField(max_length=300, verbose_name="ふりがな", blank=True, null=True)
     bio = models.TextField(blank=True, verbose_name="自己紹介")
     age = models.PositiveIntegerField(null=True, blank=True, verbose_name="年齢")
     def __str__(self):

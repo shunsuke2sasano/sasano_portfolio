@@ -21,15 +21,75 @@
     <p>年齢: {{ profile.age|default:"未設定" }}</p>
     <p>自己紹介: {{ profile.bio|default:"未設定" }}</p>
     <p>いいね数: {{ profile.likes_count }}</p>
-    <button class="like-btn" data-user-id="{{ profile.user.id }}">
+
+    <!-- いいねボタン -->
+    <button class="like-btn" data-profile-id="{{ profile.id }}">
         👍 {{ profile.likes_count }}
     </button>
 
+    <!-- ここでCSRFトークンをJSで使えるようにする -->
     <script>
-        const likeToggleUrl = "{% url 'accounts:like_toggle' profile.user.id %}";
         const csrfToken = "{{ csrf_token|safe }}";
+
+        function getLikeToggleUrl(profileId) {
+            return `/accounts/like_toggle/${profileId}/`;
+        }
     </script>
 
     <script src="{% static 'accounts/like_toggle.js' %}"></script>
-{% endblock %}
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const likeButtons = document.querySelectorAll('.like-btn');
+        const csrfToken = "{{ csrf_token|safe }}";  // テンプレート内でCSRFトークンを取得
+    
+        likeButtons.forEach(button => {
+            button.addEventListener('click', async () => {
+                const profileId = button.dataset.profileId;
+                if (!profileId) {
+                    console.error("Profile ID not found!");
+                    return;
+                }
+    
+                // リクエスト先URL
+                const likeToggleUrl = `/accounts/like_toggle/${profileId}/`;
+    
+                try {
+                    const response = await fetch(likeToggleUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                        },
+                        body: JSON.stringify({}), // 今回は特に送るデータなし
+                    });
+    
+                    // --- レスポンスチェック ---
+                    if (!response.ok) {
+                        // 403の場合 → JSONをパースして、redirectがあればリダイレクト
+                        if (response.status === 403) {
+                            const data = await response.json();
+                            if (data.redirect) {
+                                window.location.href = data.redirect;
+                                return;
+                            }
+                        }
+                        throw new Error('Network response was not ok');
+                    }
+    
+                    // --- 成功時（200 OK） ---
+                    const data = await response.json();
+                    if (data.success) {
+                        // 「いいね数」を更新
+                        button.textContent = `👍 ${data.likes}`;
+                    } else {
+                        alert('Failed to like the profile.'); // data.message を出してもOK
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        });
+    });
+    </script>
+    {% endblock %}

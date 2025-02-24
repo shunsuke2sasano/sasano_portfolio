@@ -8,6 +8,7 @@
 <ul>
     {% for profile in profiles %}
         <li>
+            <!-- プロフィール画像の表示 -->
             {% if profile.profile_image %}
                 <img src="{{ profile.profile_image.url }}" alt="Profile Image" width="100">
             {% elif profile.user.profile_image and profile.user.profile_image.name != "profile_images/default_profile_image.jpg" %}
@@ -21,7 +22,9 @@
                     {{ profile.name|default:profile.user.name|default:"未設定" }}
                 </a>
             </strong> - {{ profile.get_gender_display|default:"未設定"}}
-            <button class="like-btn" data-user-id="{{ profile.user.id }}">
+            
+            <!-- いいねボタン -->
+            <button class="like-btn" data-profile-id="{{ profile.id }}">
                 👍 {{ profile.likes_count }}
             </button>
         </li>
@@ -31,33 +34,60 @@
 </ul>
 
 <script>
-    // いいねボタンのクリックイベントを設定
-    document.querySelectorAll('.like-btn').forEach((button) => {
-        button.addEventListener('click', function () {
-            const userId = this.getAttribute('data-user-id'); // ボタンのdata-user-id属性から取得
-            const likeToggleUrl = `/accounts/like_toggle/${userId}/`; // 動的にURLを生成
-            const csrfToken = "{{ csrf_token|safe }}";
+document.addEventListener('DOMContentLoaded', function () {
+    const likeButtons = document.querySelectorAll('.like-btn');
+    const csrfToken = "{{ csrf_token|safe }}";  // テンプレート内でCSRFトークンを取得
 
-            fetch(likeToggleUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken,
-                },
-                body: JSON.stringify({}),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.textContent = `👍 ${data.likes}`;
-                } else {
-                    alert('Failed to like the profile.');
+    likeButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const profileId = button.dataset.profileId;
+            if (!profileId) {
+                console.error("Profile ID not found!");
+                return;
+            }
+
+            // リクエスト先URL
+            const likeToggleUrl = `/accounts/like_toggle/${profileId}/`;
+
+            try {
+                const response = await fetch(likeToggleUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({}), // 今回は特に送るデータなし
+                });
+
+                // --- レスポンスチェック ---
+                if (!response.ok) {
+                    // 403の場合 → JSONをパースして、redirectがあればリダイレクト
+                    if (response.status === 403) {
+                        const data = await response.json();
+                        if (data.redirect) {
+                            window.location.href = data.redirect;
+                            return;
+                        }
+                    }
+                    throw new Error('Network response was not ok');
                 }
-            })
-            .catch(error => console.error('Error:', error));
+
+                // --- 成功時（200 OK） ---
+                const data = await response.json();
+                if (data.success) {
+                    // 「いいね数」を更新
+                    button.textContent = `👍 ${data.likes}`;
+                } else {
+                    alert('Failed to like the profile.'); // data.message を出してもOK
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
         });
     });
+});
 </script>
 {% endblock %}
+
 
 

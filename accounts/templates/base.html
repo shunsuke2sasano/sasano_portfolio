@@ -13,21 +13,70 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">ポートフォリオ</a>
-
+            <!-- サイドバーのトグルボタン（小画面用） -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle sidebar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <!-- ログイン状態に応じたログイン/ログアウトリンク -->
+            <div class="ms-auto">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-secondary btn-sm">ログアウト</a>
+                {% else %}
+                    <a href="{% url 'accounts:login_C-000' %}" class="btn btn-outline-primary btn-sm">ログイン</a>
+                {% endif %}
+            </div>
         </div>
     </nav>
-
-    <!-- コンテンツエリア -->
+    
+    <!-- サイドバーとメインコンテンツ -->
     <div class="container mt-4">
-        {% block content %}
-        <!-- ページごとのコンテンツがここに入る -->
-        {% endblock %}
+        <div class="row">
+            <!-- サイドバー（collapseで収納可能） -->
+            <aside class="col-md-3 collapse d-md-block" id="sidebarMenu">
+                <div class="list-group">
+                    {% if user.is_authenticated %}
+                        {% if user.is_superuser %}
+                            <!-- 管理者向けサイドバー -->
+                            <a href="{% url 'accounts:admin_settings' user.id %}" class="list-group-item list-group-item-action">管理者設定画面</a>
+                            <a href="{% url 'accounts:account_list' %}" class="list-group-item list-group-item-action">アカウント一覧</a>
+                            <a href="{% url 'accounts:account_create' %}" class="list-group-item list-group-item-action">アカウント作成画面</a>
+                            <a href="{% url 'accounts:account_edit' user.id %}" class="list-group-item list-group-item-action">管理者アカウント編集</a>
+                            <a href="{% url 'accounts:account_delete_list' %}" class="list-group-item list-group-item-action">削除済み一覧</a>
+                            <a href="{% url 'dashboard:admin_dashboard' %}" class="list-group-item list-group-item-action">管理者ダッシュボード画面</a>
+                            <a href="{% url 'inquiry:list' %}" class="list-group-item list-group-item-action">お問合せ一覧</a>
+                            <a href="{% url 'inquiry:category_list' %}" class="list-group-item list-group-item-action">カテゴリ一覧</a>
+                            <a href="{% url 'inquiry:category_add' %}" class="list-group-item list-group-item-action">カテゴリ追加</a>
+                        {% else %}
+                            <!-- 一般ユーザー向けサイドバー -->
+                            <a href="{% url 'dashboard:user_dashboard' %}" class="list-group-item list-group-item-action">一般ユーザーダッシュボード</a>
+                            <a href="{% url 'accounts:user_settings' %}" class="list-group-item list-group-item-action">一般アカウント設定画面</a>
+                            <a href="{% url 'accounts:edit_profile' %}" class="list-group-item list-group-item-action">自己紹介編集画面</a>
+                        {% endif %}
+                    {% else %}
+                        <!-- 未ログイン時のサイドバー -->
+                        <a href="{% url 'users:general_account_list' %}" class="list-group-item list-group-item-action">一般アカウント一覧</a>
+                        <a href="{% url 'accounts:monthly_like_ranking' %}" class="list-group-item list-group-item-action">月のいいねランキング</a>
+                        <a href="{% url 'users:inquiry_create' %}" class="list-group-item list-group-item-action">お問合せ作成画面</a>
+                    {% endif %}
+                </div>
+            </aside>
+            
+            <!-- メインコンテンツエリア -->
+            <main class="col-md-9">
+                {% block content %}
+                <!-- 各ページのコンテンツがここに入ります -->
+                {% endblock %}
+            </main>
+        </div>
     </div>
+
+    <!-- Bootstrap JavaScript (Bundle版: Popper.js も同梱) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- フッター -->
     <footer class="bg-light text-center text-lg-start mt-4">
         <div class="text-center p-3">
-            © 2024 ポートフォリオ | All Rights Reserved.
+            © 2025 ポートフォリオ | All Rights Reserved.
         </div>
     </footer>
 </body>

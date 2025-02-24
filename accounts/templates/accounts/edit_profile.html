@@ -9,55 +9,66 @@
     <form method="POST" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
 
-        <div class="form-group">
-            {{ form.profile_image.label_tag }}
-            {{ form.profile_image }}
-            {% if form.profile_image.errors %}
-                <div class="text-danger">{{ form.profile_image.errors }}</div>
-            {% endif %}
+        <div class="general-fields">
+            <div class="form-group">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                {% for error in form.name.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.furigana.label_tag }}
+                {{ form.furigana }}
+                {% for error in form.furigana.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                {{ form.profile_image.label_tag }}
+                {% if user.profile_image %}
+                  <div>
+                    <p>現在のプロフィール画像:</p>
+                    <img src="{{ user.profile_image.url }}" alt="Current Profile Image" width="100">
+                  </div>
+                {% endif %}
+                {{ form.profile_image }}
+                {% for error in form.profile_image.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            
+
+            <div class="form-group">
+                {{ form.gender.label_tag }}
+                {{ form.gender }}
+                {% for error in form.gender.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+            
+            <div class="form-group">
+                {{ form.age.label_tag }}
+                {{ form.age }}
+                {% for error in form.age.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.bio.label_tag }}
+                {{ form.bio }}
+                {% for error in form.bio.errors %}
+                    <div class="text-danger">{{ error }}</div>
+                {% endfor %}
+            </div>
         </div>
 
-        <div class="form-group">
-            {{ form.name.label_tag }}
-            {{ form.name }}
-            {% if form.name.errors %}
-                <div class="text-danger">{{ form.name.errors }}</div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.furigana.label_tag }}
-            {{ form.furigana }}
-            {% if form.furigana.errors %}
-                <div class="text-danger">{{ form.furigana.errors }}</div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.gender.label_tag }}
-            {{ form.gender }}
-            {% if form.gender.errors %}
-                <div class="text-danger">{{ form.gender.errors }}</div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.age.label_tag }}
-            {{ form.age }}
-            {% if form.age.errors %}
-                <div class="text-danger">{{ form.age.errors }}</div>
-            {% endif %}
-        </div>
-
-        <div class="form-group">
-            {{ form.bio.label_tag }}
-            {{ form.bio }}
-            {% if form.bio.errors %}
-                <div class="text-danger">{{ form.bio.errors }}</div>
-            {% endif %}
-        </div>
-
-        <button type="submit" class="btn btn-primary">保存</button>
+        <button type="submit" id="submit-button" class="btn btn-primary mt-3">保存</button>
     </form>
 </div>
+
+
 {% endblock %}

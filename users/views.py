@@ -90,9 +90,19 @@ def inquiry_create(request):
 
 def general_account_list(request):
     # GeneralUserProfileを取得
-    profiles = GeneralUserProfile.objects.filter(user__is_active=True, user__is_deleted=False).select_related('user')  # アクティブなユーザーのみを表示
+    profiles = GeneralUserProfile.objects.filter(
+        user__is_active=True,
+        user__is_deleted=False,
+        user__is_staff=False,
+        user__is_superuser=False
+    ).select_related('user')
     return render(request, 'users/general_account_list.html', {'profiles': profiles})
 
 def general_account_detail(request, user_id):
-    profile = get_object_or_404(GeneralUserProfile, user_id=user_id)
+    profile = get_object_or_404(
+        GeneralUserProfile,
+        user_id=user_id,
+        user__is_staff=False,
+        user__is_superuser=False
+    )
     return render(request, 'users/general_account_detail.html', {'profile': profile})
