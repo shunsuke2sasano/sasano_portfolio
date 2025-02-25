@@ -27,7 +27,7 @@ services:
       - .:/app
     working_dir: /app
     ports:
-      - "8000:8000"
+      - "9132:8000"
     depends_on:
       - db
     environment:
