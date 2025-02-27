@@ -208,7 +208,7 @@ class AccountForm(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ['name', 'email', 'password', 'profile_image', 'furigana', 'age', 'bio', 'status']
+        fields = ['name', 'email', 'password', 'profile_image','gender', 'furigana', 'age', 'bio', 'status']
 
     def clean_name(self):
         """アカウント名のバリデーション"""
